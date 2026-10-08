@@ -18,11 +18,26 @@ python3 scripts/build_records.py
 
 To serve it locally instead (optional): `cd site && python3 -m http.server 8000`, then open http://localhost:8000.
 
+## Publishing on GitHub Pages
+
+The site is published automatically by `.github/workflows/pages.yml`. On every push to `main`, the workflow rebuilds the data (`scripts/build_records.py`) and publishes the `site/` folder.
+
+Live address: **https://tenzin3.github.io/Tibetan-Self-Immolations-A-Visual-Record/**
+
+One-time setup:
+1. Push the repository: `git push origin main`.
+2. On GitHub, open the repository's **Settings → Pages**. Under **Build and deployment → Source**, choose **GitHub Actions**.
+3. Open the **Actions** tab. If the "Deploy site to GitHub Pages" run failed because Pages wasn't enabled yet, select it and choose **Re-run all jobs** (or use **Run workflow**).
+4. After about a minute, the address above is live. It also appears at the top of Settings → Pages.
+
+After that, every `git push` to `main` updates the live site. `site/.nojekyll` tells GitHub to serve the files as they are.
+
 ## Project layout
 
 ```
 .
 ├── README.md                     this file
+├── .github/workflows/pages.yml   publishes site/ to GitHub Pages on every push to main
 ├── data/
 │   ├── cta-records.json          SOURCE: 157 rows transcribed from the CTA fact sheet
 │   └── source-reported-counts.json   published totals from CTA and ICT (not reconciled)
