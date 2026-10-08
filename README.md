@@ -1,6 +1,6 @@
 # Tibetan Self-Immolations: A Visual Record
 
-An interactive, scrolling timeline of the 157 Tibetans recorded by the Central Tibetan Administration (CTA) as having self-immolated in protest between February 2009 and March 2022. Each person appears as a small floating lamp showing their name and date. Select a lamp to open their full record: date, age, place, monastery or village, parents, reported outcome, review notes and sources.
+An interactive radial graph of the 157 Tibetans recorded by the Central Tibetan Administration (CTA) as having self-immolated in protest between February 2009 and March 2022. Each person is a circle holding their photo (or initials until a photo is added), with their name and date underneath. Every circle has a line to one shared centre. You can drag, zoom and rotate the whole graph, and selecting a person opens their full record.
 
 ## Quick start
 
@@ -32,9 +32,9 @@ To serve it locally instead (optional): `cd site && python3 -m http.server 8000`
 ├── scripts/
 │   └── build_records.py          merges the source data and corrections into site/data/
 └── site/                         the visualization (static files, no build tools)
-    ├── index.html                page structure
-    ├── styles.css                all styling, layout, animation
-    ├── app.js                    all behaviour (timeline, filters, detail panel, embers)
+    ├── index.html                page structure (SVG graph, panels, record panel)
+    ├── styles.css                all styling
+    ├── app.js                    layout, camera (pan/zoom/rotate), motion, search, record panel
     ├── data/
     │   ├── records.json          GENERATED merged dataset (also linked as a download)
     │   └── records.js            GENERATED same data as `window.VISUAL_RECORD = …`
@@ -44,55 +44,61 @@ To serve it locally instead (optional): `cd site && python3 -m http.server 8000`
 
 Files under `site/data/` are generated. Edit `data/` or `research/`, then re-run the build script.
 
-The earlier prototype in `sites/visual-record/` was removed. It loaded a `data/records.json` file that never existed, so it showed no records. Everything it did is covered by `site/`.
+The earlier prototype in `sites/visual-record/` was removed. It loaded a `data/records.json` file that never existed, so it showed no records. Everything it did is covered by `site/`. A first scrolling-timeline version of `site/` was then replaced by this radial graph.
 
 ## What the page shows
 
-### 1. Opening section
-- **Headline figures**, computed from the data: people (157), reported dead (136), women (25), people in 2012 (85).
-- **Dot histogram**: one dot is one person, stacked by year. Filled amber dots are people who died; hollow dots are everyone else. Select any year's column (click, or Tab then Enter) to scroll to that year.
+### The graph
+- **Centre (hub)**: a glowing disc reading "157 lives, 2009 – 2022". Every person is linked to it. Select the hub to open *About this record*: people by year, how to read the graph, and the scope of the data.
+- **People**: one circle per person, holding a portrait or initials. The **name** sits underneath, with the **date of the protest** below it.
+- **Lines**: each person has one line to the centre. Lines curve slightly so the graph reads as a turning spiral. A person's line lights up amber when you hover over, focus, or select them.
+- **Order is time**: people sit on a spiral. A dashed thread runs from the earliest (Tapey, February 2009), nearest the centre, out to the most recent (March 2022) at the edge. A wider gap opens before each new year, labelled with the year and its count (for example "2012, 85 people").
+- **Ring shows the reported outcome**:
+  - amber ring with a soft glow: died (136)
+  - pale green ring: survived, released or recovering (7)
+  - dashed grey ring: in custody, injured with no later report, or unknown (14)
 
-### 2. Find bar (stays at the top while scrolling on wider screens)
-- **Search** by name, alias, place, monastery or province. Accents are ignored.
-- **Outcome chips**: Everyone, Died, Survived, or Custody / injured / unknown. Each shows its count.
-- **Province** menu: Sichuan, Qinghai, Gansu, Tibet Autonomous Region, Beijing.
-- Lamps that don't match fade out but keep their place, so the shape of the timeline stays readable. The status line gives the match count and a link to the first match.
+### Moving around
+| Action | Mouse / trackpad | Touch | Keyboard / buttons |
+| --- | --- | --- | --- |
+| Move (pan) | drag | one-finger drag | arrow keys |
+| Zoom | scroll wheel, or trackpad pinch | pinch | `+` / `−`, or the + − buttons |
+| Rotate | Shift + drag, or Shift + scroll; Safari trackpad rotate | two-finger twist | `[` / `]`, or the ⟲ ⟳ buttons |
+| Slow automatic rotation | — | — | space, or the ❚❚ / ▶ button |
+| Reset view | — | — | `0`, or the ⌂ button |
+| Open a person | click | tap | Tab to a person, then Enter |
 
-### 3. The timeline (main visualization)
-- A vertical **time spine** runs down the left. Years are large numerals that stay pinned while you scroll through that year. Months are ticks on the spine.
-- Each **person is a lamp**: a circle with their portrait (or initials until a portrait is added), their name, and the day and month.
-- **Ring style shows the reported outcome**:
-  - glowing amber ring: died
-  - pale green ring: survived (released or recovering)
-  - dashed grey ring: in custody, injured with no later report, or unknown
-- **Dashed outline around several lamps**: people who protested on the same day in the same place (148 incidents for 157 people).
-- **Empty stretches** are kept and labelled ("Apr – Oct · no one recorded"; "No one recorded in this table in 2020"), so gaps in time remain visible. A gap means no row in this table, not proof that nothing happened.
+Zoom works around the pointer or pinch point. Rotation turns around the centre, or around the pinch point for a twist. **Level of detail:** fully zoomed out, only the circles show; zooming in reveals names, then dates.
 
-### 4. Motion and floating effects
-| Effect | How it works | Where |
+### Motion
+| Effect | How it works | Where in the code |
 | --- | --- | --- |
-| Floating lamps | Each lamp drifts up and down on its own CSS animation (`@keyframes drift`). Duration (5.5–9.5 s), phase and vertical offset come from a hash of the record id, so the layout looks organic but is the same on every visit. | `styles.css` `.lamp`; `app.js` `nodeHTML` |
-| Lamps light as you pass | An `IntersectionObserver` adds `.lit` to lamps in the middle of the screen. Lit lamps glow amber (or green, or grey by outcome), and the initials brighten. | `app.js` "Scroll" section |
-| Hover lift | A lamp rises and enlarges slightly on hover or keyboard focus; its float pauses. | `.node:hover .lamp` |
-| Rising embers | A full-screen `<canvas>` behind the page draws slow, soft amber particles. They move with scroll at different depths (parallax). Drawing pauses when the tab is hidden. | `app.js` `embers()` |
-| Year rail | On screens 1100 px and wider, a rail on the right lists every year with a bar sized to its count. It highlights the year you are in, and clicking scrolls there. On smaller screens, a small badge in the corner shows the current year and count. | `#rail`, `#now` |
-| Panel slide | The detail panel slides in from the right (from the bottom on phones). | `.drawer` |
+| Opening move | The graph starts small and slightly turned, then drifts in to fill the screen (2.2 s). | `app.js`, "Start" |
+| Slow rotation | The whole graph turns around the centre at about 2.6° per second. It pauses while you drag and while a record is open, and can be switched off. | `frame()`, `SPIN` |
+| Floating | Every circle drifts a few pixels on its own slow orbit. Speed and phase come from a hash of the record id, so the motion looks organic and is the same on every visit. Lines follow their circle. | `frame()` |
+| Upright labels | Names, years and the hub are counter-rotated every frame, so text stays level however the graph is turned. | `frame()` |
+| Hover | A circle grows, glows and lights its line. | `styles.css`, `.node:hover` |
+| Fly-to | Opening a person smoothly pans and zooms them to the middle of the visible area, beside the panel. | `flyTo()`, `viewFor()` |
+| Embers | Soft amber particles rise in a background canvas and drift as you pan (parallax). | `embers()` |
 
-If the visitor's system asks for **reduced motion**, floating, embers, smooth scrolling and slides are all switched off; everything stays readable.
+When the visitor's system asks for **reduced motion**, the rotation, floating, opening move, fly-to and embers are all off. Everything else still works.
 
-### 5. Detail panel (click any lamp)
-- Large portrait or initials, name, any aliases, and an outcome badge.
-- Date of protest. If it was corrected, the CTA value is shown underneath.
-- Age (marked as approximate when the source gives "20s", "late 30s", etc.), gender, province, place of protest, monastery, village or occupation, and parents when recorded.
-- For people who died: the date of death and the number of days after the protest.
-- **Same day, same place**: buttons that jump to the others in the same incident.
-- **Notes on this record**: every correction, with the original value, the value used, the evidence, and its certainty; date checks; transcription notes.
-- **Sources**: the CTA fact sheet plus each supporting report.
-- The CTA's original date and status text, word for word.
-- **Navigation**: Earlier / Later buttons or the ← → keys move through people in date order, and Esc closes the panel. The address updates to `#cta-007` and so on, so a link opens straight to that person.
+### Find
+- **Search** (top right) matches names, aliases, places, monasteries, provinces and years; accents are ignored. Matching people stay bright, with bold rings and lines, and everyone else fades. Press Enter, or select "Show …", to fly to the first match.
+- **Outcome chips**: Everyone, Died, Survived, or Custody / injured / unknown.
 
-### 6. About section
-States the scope (the CTA table only), the ICT totals (159 inside Tibet and China plus 11 in exile), what isn't included yet, and how outcomes should be read. It links to the merged JSON.
+### Record panel (select anyone)
+The panel shows:
+- portrait or initials, name, aliases and an outcome badge
+- date of protest, with the CTA value if it was corrected
+- age (marked approximate when published as "20s" and similar), gender and province
+- place of protest, monastery or village, and parents
+- for people who died: the date of death and the number of days after the protest
+- *Same day, same place*: links to the others from the same incident
+- *Notes on this record*: every correction, with the original value, the value used, the evidence and its certainty
+- *Sources*: every link behind the record
+
+**Earlier / Later** (or ← →) walk through people in date order, and the graph flies to each one. Esc closes the panel. The address becomes `#cta-050` and so on, so a link opens straight to that person; `#about` opens the about panel.
 
 ## How the data is built (`scripts/build_records.py`)
 
@@ -139,12 +145,14 @@ The source data contains no photographs, and `research/SOURCES.md` requires each
      }
    }
    ```
-3. Run `python3 scripts/build_records.py`. The lamp, the panel and the credit line update automatically. Portraits show in muted, warm grayscale to match the page.
+3. Run `python3 scripts/build_records.py`. The circle in the graph, the record panel and the credit line update automatically. Photos are cropped to a circle.
 
 ## Design notes
-- **Concept**: a vigil. Butter-lamp light on a deep umber night, with monastic maroon for the spine and rules. The page uses one deliberate dark theme.
-- **Type**: Cormorant Garamond for names and years, Instrument Sans for reading, JetBrains Mono for dates and labels (Google Fonts, with system fallbacks).
-- **Accessibility**: every lamp is a real button with a spoken label (name, date, outcome); the histogram columns and year rail are keyboard-operable; the panel keeps focus inside while it is open and returns focus to the lamp when it closes. The layout works down to phone width without sideways scrolling.
+- **Concept**: a vigil. Butter-lamp amber on a deep umber night, with monastic maroon for the lines. The page uses one deliberate dark theme.
+- **Type**: Cormorant Garamond for the title, years and hub; Instrument Sans for names and reading; JetBrains Mono for dates and labels. All come from Google Fonts, with system fallbacks.
+- **Geometry** (top of the layout section in `app.js`): circle radius `NODE_R` 20, spacing along the spiral `S` 80, distance between turns `TURN` 92, inner radius `R0` 175, year gap `YEAR_GAP` 1.9×S. These values keep names from overlapping their neighbours.
+- **Camera**: `screen = centre + offset + zoom · rotation · world`. All pan, zoom and rotate math is in `zoomAt()` and `rotateAt()`.
+- **Accessibility**: every person is focusable, with a spoken label (name, date, outcome). The hub and all controls work from the keyboard. The record panel keeps focus inside while it is open and returns focus to the person when it closes. The layout works at phone width.
 
 ## Known limits and next steps
 - Covers the **CTA table only**. Still to add: the 11 exile cases listed by ICT (including Thubten Ngodrup, Delhi, 1998, and Lobga Rangzen, New York, 2026) and the 30 March 2022 RFA report of Tsering Samdup.

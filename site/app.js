@@ -430,7 +430,7 @@
         if (p.x < -10) p.x = w + 5; if (p.x > w + 10) p.x = -5;
         const x = p.x + Math.sin(p.sw + t / 3000) * 6 * p.d;
         const g = ctx.createRadialGradient(x, p.y, 0, x, p.y, p.r * 4);
-        g.addColorStop(0, `rgba(240,166,58,${p.a * p.d})`); g.addColorStop(1, 'rgba(240,166,58,0)');
+        g.addColorStop(0, `rgba(242,177,52,${p.a * p.d})`); g.addColorStop(1, 'rgba(242,177,52,0)');
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, p.y, p.r * 4, 0, 6.283); ctx.fill();
       }
       if (!reduceMotion) requestAnimationFrame(draw);

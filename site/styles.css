@@ -1,16 +1,17 @@
-/* Layout: one full-screen night sky. A glowing hub at the centre; every person is a
+/* Palette: Himalayan night (indigo), snow text, saffron light, prayer-flag green.
+   Layout: one full-screen night sky. A glowing hub at the centre; every person is a
    lamp on a spiral of time, linked to the hub. Floating panels sit at the corners.
-   One deliberate dark theme: the page is a vigil, not a dashboard. */
+   One deliberate dark theme. */
 :root {
-  --night: #120b0a;          /* ground, warm umber black */
-  --night-2: #1d1311;        /* raised panels */
-  --robe: #5c1f1c;           /* monastic maroon: links, rules */
-  --flame: #f0a63a;          /* butter-lamp flame, the one accent */
-  --parchment: #f1e6d2;      /* primary text */
-  --ash: #a8957f;            /* secondary text */
-  --smoke: #6c5b4f;          /* tertiary text */
-  --line: #3a2723;           /* hairlines */
-  --survived: #9cc3b4;       /* semantic: survived */
+  --night: #0c1220;          /* ground, Himalayan night indigo */
+  --night-2: #151d30;        /* raised panels */
+  --robe: #34466e;           /* slate blue: links, rules */
+  --flame: #f2b134;          /* saffron, the one accent */
+  --parchment: #eef1f6;      /* snow, primary text */
+  --ash: #9aa6bd;            /* secondary text */
+  --smoke: #61708d;          /* tertiary text */
+  --line: #26324d;           /* hairlines */
+  --survived: #6cc29a;       /* semantic: survived (prayer-flag green) */
 
   --display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --body: "Instrument Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
@@ -135,7 +136,7 @@ h1 span { display: block; font-style: italic; font-size: .6em; color: var(--flam
 .hint.quiet { opacity: .35; }
 
 /* ---------- Drawer ---------- */
-.scrim { position: fixed; inset: 0; z-index: 9; background: rgba(8, 4, 3, .3); opacity: 0; transition: opacity .3s; }
+.scrim { position: fixed; inset: 0; z-index: 9; background: rgba(4, 7, 14, .35); opacity: 0; transition: opacity .3s; }
 .scrim.open { opacity: 1; }
 .drawer {
   position: fixed; z-index: 10; top: 0; right: 0; bottom: 0; width: min(440px, 100%);
@@ -156,7 +157,7 @@ h1 span { display: block; font-style: italic; font-size: .6em; color: var(--flam
 .d-head { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 20px; align-items: center; margin-bottom: 22px; }
 .face {
   width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; overflow: hidden;
-  background: radial-gradient(circle at 50% 65%, #3d2519, #170e0b); border: 2px solid var(--robe);
+  background: radial-gradient(circle at 50% 65%, #22305080, #0f1626), #0f1626; border: 2px solid var(--robe);
   font: 500 34px var(--display);
 }
 .face img { width: 100%; height: 100%; object-fit: cover; }
