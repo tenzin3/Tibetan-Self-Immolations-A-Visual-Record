@@ -1,0 +1,70 @@
+{
+  "research_date": "2026-10-08",
+  "status": "source_reported_unreconciled",
+  "description": "Published source claims, not an independently verified or deduplicated project total. Missing years are not asserted to have zero incidents.",
+  "sources": [
+    {
+      "id": "ict_fact_sheet",
+      "publisher": "International Campaign for Tibet",
+      "url": "https://savetibet.org/tibetan-self-immolations/",
+      "accessed_on": "2026-10-08",
+      "displayed_updated_on": "2026-07-03",
+      "claims": {
+        "people_inside_tibet_and_china_since_2009": 159,
+        "people_in_exile_separate_section": 11
+      },
+      "cautions": [
+        "The exile section includes cases before 2009; do not label a combined count as since 2009.",
+        "Headline totals have not been checked against every individual entry.",
+        "The reviewed 2022 section contains Tsewang Norbu and Taphun; reconcile the separately reported Tsering Samdup case."
+      ]
+    },
+    {
+      "id": "cta_fact_sheet",
+      "publisher": "Central Tibetan Administration",
+      "url": "https://tibet.net/important-issues/factsheet-immolation-2011-2012/",
+      "accessed_on": "2026-10-08",
+      "displayed_updated_on": "2022-03-14",
+      "scope": "Tibetan self-immolation protests in Tibet since February 2009, as defined by the publisher",
+      "claims": {
+        "total_people": 157,
+        "reported_deaths": 136,
+        "male": 131,
+        "female": 26,
+        "people_by_year": {
+          "2009": 1,
+          "2011": 12,
+          "2012": 85,
+          "2013": 26,
+          "2014": 11,
+          "2015": 8,
+          "2016": 3,
+          "2017": 6,
+          "2018": 2,
+          "2019": 1,
+          "2022": 2
+        }
+      },
+      "cautions": [
+        "Displayed update date precedes the March 27, 2022 incident included in the table.",
+        "Annual values are transcribed from the publisher's summary, not recomputed from individual records.",
+        "Deaths and total people must not be combined with another publisher's denominators."
+      ]
+    }
+  ],
+  "reconciliation_candidates": [
+    {
+      "name": "Tsering Samdup",
+      "aliases": ["Tsering"],
+      "reported_incident_date": "2022-03-30",
+      "location": "Kyegudo (Jiegu), Yushu Tibetan Autonomous Prefecture, Qinghai, China",
+      "outcome_at_reporting": "unknown",
+      "motivation_at_reporting": "unknown",
+      "source_url": "https://www.rfa.org/english/news/tibet/yushul-immolation-03312022125553.html",
+      "source_publication_date": "2022-03-31",
+      "accessed_on": "2026-10-08",
+      "inclusion_status": "pending_review",
+      "note": "Do not add to published totals without reconciling their individual entries and inclusion criteria."
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+{
+  "checked_date": "2026-10-08",
+  "source_dataset": "data/cta-records.json",
+  "method": "Compare specified CTA anomalies against contemporary case reporting and named later compilations. High certainty means the replacement has strong documentary support, not direct observation. Preserve the original CTA claim and all source links in the merged dataset.",
+  "corrections": [
+    {
+      "cta_table_position": 7,
+      "name": "Choephel",
+      "field": "incident_date",
+      "original_value": "7/11/2011",
+      "suggested_value": "2011-10-07",
+      "supporting_report_url": "https://www.hrw.org/news/2011/11/03/open-letter-president-peoples-republic-china-self-immolations-tibetan-populated",
+      "evidence": "HRW's 3 November 2011 case list dates Choephel's incident to 7 October and death to 11 October.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 14,
+      "name": "Lobsang Tsultrim",
+      "field": "incident_date",
+      "original_value": "06/12/2012",
+      "suggested_value": "2012-01-06",
+      "supporting_report_url": "https://savetibet.org/tibetan-self-immolations-continue-and-spread-in-tibet-into-2012/",
+      "evidence": "ICT's 9 January 2012 report names both men and places their incident on 6 January 2012.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 15,
+      "name": "Tennyi",
+      "field": "incident_date",
+      "original_value": "06/12/2012",
+      "suggested_value": "2012-01-06",
+      "supporting_report_url": "https://savetibet.org/tibetan-self-immolations-continue-and-spread-in-tibet-into-2012/",
+      "evidence": "ICT's 9 January 2012 report names both men and places their incident on 6 January 2012.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 14,
+      "name": "Lobsang Tsultrim",
+      "field": "death_date",
+      "original_value": "Died on 07/12/2012",
+      "suggested_value": "2012-01-07",
+      "supporting_report_url": "https://savetibet.org/tibetan-self-immolations-continue-and-spread-in-tibet-into-2012/",
+      "evidence": "Contemporary ICT report dates Tsultrim's death to 7 January.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 15,
+      "name": "Tennyi",
+      "field": "death_date",
+      "original_value": "Died on 06/12/2012",
+      "suggested_value": "2012-01-06",
+      "supporting_report_url": "https://savetibet.org/tibetan-self-immolations-continue-and-spread-in-tibet-into-2012/",
+      "evidence": "Contemporary ICT report dates Tennyi's death to 6 January.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 117,
+      "name": "Kunchok Woeser",
+      "field": "death_date",
+      "original_value": "Died on 24/4/2103",
+      "suggested_value": "2013-04-24",
+      "supporting_report_url": "https://www.rfa.org/english/news/tibet/protests-04242013160540.html",
+      "evidence": "RFA's 24 April 2013 report identifies Konchog Woeser and Lobsang Dawa and reports both died that day.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 19,
+      "name": "Sonam Rabyang",
+      "field": "incident_date",
+      "original_value": "08/02/12",
+      "suggested_value": "2012-02-09",
+      "supporting_report_url": "https://www.rfa.org/english/news/tibet/another-02092012170023.html",
+      "evidence": "RFA's 9 February report describes a Lab monastery monk's incident that Thursday; CECC later identifies the man as Sonam Rabyang. Some accounts retain 8 February.",
+      "certainty": "medium",
+      "additional_sources": [
+        "https://www.ecoi.net/en/document/1009807.html",
+        "https://www.cecc.gov/publications/annual-reports/2012-annual-report",
+        "https://www.thetibetpost.com/news/tibet/tibetan-monk-survives-self-immolation-in-tibet%2C-suffers-amputation-of-both-legs"
+      ],
+      "recommendation": "Prefer 9 February but retain explicit 8/9 February discrepancy."
+    },
+    {
+      "cta_table_position": 150,
+      "name": "Jamyang Losal",
+      "field": "incident_date",
+      "original_value": "18/5/2017",
+      "suggested_value": "2017-05-19",
+      "supporting_report_url": "https://savetibet.org/young-tibetan-monk-becomes-the-150th-self-immolator-in-tibet/",
+      "evidence": "ICT's corrected 23 May report dates the incident to Friday, 19 May 2017; Tibet Express's 20 May report agrees.",
+      "certainty": "high",
+      "additional_sources": [
+        "https://tibetexpress.net/tibetan-monk-self-immolates-in-eastern-tibet-toll-reaches-150/"
+      ]
+    },
+    {
+      "cta_table_position": 150,
+      "name": "Jamyang Losal",
+      "field": "death_date",
+      "original_value": "Died on 18/5/2017",
+      "suggested_value": "2017-05-19",
+      "supporting_report_url": "https://savetibet.org/young-tibetan-monk-becomes-the-150th-self-immolator-in-tibet/",
+      "evidence": "ICT's corrected report says Jamyang Losel died on 19 May after transfer to Xining.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 150,
+      "name": "Jamyang Losal",
+      "field": "incident_location",
+      "original_value": "In front of Mani temple in Chentsa, Malho Tibetan Autonomous Prefecture (incorporated into China’s Qinghai Province)",
+      "suggested_value": "Near the county hospital, Chentsa (Jianzha), Malho (Huangnan) Tibetan Autonomous Prefecture, Qinghai",
+      "supporting_report_url": "https://savetibet.org/young-tibetan-monk-becomes-the-150th-self-immolator-in-tibet/",
+      "evidence": "ICT explicitly corrected an earlier Kangtsa attribution and reports the location near the Chentsa hospital.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 151,
+      "name": "Tenga",
+      "field": "incident_location",
+      "original_value": "Main Road near Kirti monastery, Ngaba County (incorporated into China’s Sichuan Province)",
+      "suggested_value": "Kardze (Ganzi), Sichuan; traditional region of Kham",
+      "supporting_report_url": "https://savetibet.org/respected-tibetan-monk-sets-fire-to-himself-in-eastern-tibet/",
+      "evidence": "ICT's 30 November 2017 case report places Tenga's 26 November incident in Kardze, not Ngaba.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 103,
+      "name": "Drukpa Khar",
+      "field": "incident_location",
+      "original_value": "Amchok, Sangchu County, Ngaba Tibetan Autonomous Prefecture (Sichuan Province)",
+      "suggested_value": "Amchok (Achok), Sangchu (Xiahe) County, Kanlho (Gannan) Tibetan Autonomous Prefecture, Gansu",
+      "supporting_report_url": "https://www.rfa.org/english/news/tibet/burning-02172013112417.html",
+      "evidence": "RFA's 17 February 2013 report places Drukpa Khar's earlier Wednesday incident in Achok, Sangchu, and identifies the prefecture and province.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 86,
+      "name": "Sangay Dolma",
+      "field": "incident_location",
+      "original_value": "Bharkor village, Dokarmo township, Tsekhog, Malho TAP (Ch: Gansu Province)",
+      "suggested_value": "Dokarmo town, Tsekhog (Zeku) County, Malho (Huangnan) Tibetan Autonomous Prefecture, Qinghai",
+      "supporting_report_url": "https://savetibet.org/acts-of-significant-evil-case-details/",
+      "evidence": "ICT's detailed case record places Sangay Dolma's incident in Dokarmo, Tsekhog, Malho, Qinghai; CTA's Gansu designation is incompatible.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 96,
+      "name": "Kunchok Phelgye",
+      "field": "incident_location",
+      "original_value": "Monk of Dringwa Sumdo monastery, Dzoege, Ngaba Tibetan Autonomous Prefecture (Ch: Sichuan Province",
+      "suggested_value": "Outside the main assembly hall, Taktsang Lhamo Kirti monastery, Dzoege County, Ngaba Tibetan and Qiang Autonomous Prefecture, Sichuan",
+      "supporting_report_url": "https://savetibet.org/three-tibetans-self-immolate-in-two-days-during-important-buddhist-anniversary-images-of-troops-in-lhasa-as-tibetans-pray/",
+      "evidence": "ICT's 10 December 2012 case report distinguishes his former Dringwa Sumdo affiliation from the Taktsang Lhamo incident site.",
+      "certainty": "high"
+    },
+    {
+      "cta_table_position": 96,
+      "name": "Kunchok Phelgye",
+      "field": "affiliation",
+      "original_value": "Gonda Dewa village, Dringwa town, Dzoege, Ngaba Tibetan Autonomous Prefecture (Ch: Sichuan Province)",
+      "suggested_value": "Taktsang Lhamo Kirti monastery; previously Dringwa Sumdo monastery",
+      "supporting_report_url": "https://savetibet.org/three-tibetans-self-immolate-in-two-days-during-important-buddhist-anniversary-images-of-troops-in-lhasa-as-tibetans-pray/",
+      "evidence": "The report says he moved from Dringwa Sumdo to Taktsang Lhamo in 2010.",
+      "certainty": "high"
+    }
+  ],
+  "additional_checks": [
+    {
+      "cta_table_position": 108,
+      "name": "Tsesung Kyab",
+      "result": "Retain 2013-02-25; a Wikipedia-derived 24 February value is contradicted by the contemporary ICT report.",
+      "source_url": "https://savetibet.org/two-tibetans-self-immolate-at-monasteries-during-prayer-ceremonies-in-amdo/"
+    },
+    {
+      "cta_table_position": 85,
+      "name": "Wangyal",
+      "result": "Retain 2012-11-26; contemporary VOA reporting supports CTA's 26 November date.",
+      "source_url": "https://www.voanews.com/a/three-tibetans-self-immolate-in-china-amid-protests/1553295.html"
+    },
+    {
+      "cta_table_position": 107,
+      "name": "Sangdak",
+      "result": "Unresolved: CTA says 2013-02-25; ICT compilation says 2013-02-24. No change proposed in this pass.",
+      "source_url": "https://savetibet.org/wp-content/uploads/2024/08/20240820-self-immolations.pdf"
+    },
+    {
+      "cta_table_position": 83,
+      "name": "Tadin Kyab / Tamdrin Kyab",
+      "result": "Unresolved: CTA says 2012-11-22; ICT compilation says 2012-11-23. No change proposed in this pass.",
+      "source_url": "https://savetibet.org/tibetan-self-immolations/"
+    }
+  ]
+}

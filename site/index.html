@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tibetan Self-Immolations: A Visual Record</title>
+<meta name="description" content="An interactive graph of the 157 Tibetans recorded by the Central Tibetan Administration as having self-immolated in protest, 2009–2022. Pan, zoom and rotate; select anyone to read their record.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="embers" aria-hidden="true"></canvas>
+
+<svg id="graph" aria-labelledby="graph-title" aria-describedby="hint">
+  <title id="graph-title">Graph of 157 people, each linked to the centre, arranged in a spiral from 2009 at the centre to 2022 at the edge</title>
+  <defs>
+    <clipPath id="clip-circle" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath>
+    <radialGradient id="g-halo">
+      <stop offset="0" stop-color="#f0a63a" stop-opacity=".55"/>
+      <stop offset=".55" stop-color="#f0a63a" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#f0a63a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g-hub" cx=".5" cy=".55">
+      <stop offset="0" stop-color="#4a2a1a"/>
+      <stop offset=".7" stop-color="#22140f"/>
+      <stop offset="1" stop-color="#150c0a"/>
+    </radialGradient>
+    <radialGradient id="g-face" cx=".5" cy=".65">
+      <stop offset="0" stop-color="#3d2519"/>
+      <stop offset="1" stop-color="#170e0b"/>
+    </radialGradient>
+  </defs>
+  <g id="world">
+    <path id="thread" class="thread"/>
+    <g id="links"></g>
+    <g id="years"></g>
+    <g id="nodes"></g>
+    <g id="hub" class="hub" role="button" tabindex="0" aria-label="About this record"></g>
+  </g>
+</svg>
+
+<header class="top">
+  <h1>Tibetan Self-Immolations<span>A visual record</span></h1>
+  <p class="stats" id="stats"></p>
+</header>
+
+<section class="find" aria-label="Find people">
+  <label class="search" for="q"><span class="sr">Search</span>
+    <input id="q" type="search" placeholder="Search a name, place, monastery…" autocomplete="off">
+  </label>
+  <div class="chips" id="chips" role="group" aria-label="Filter by outcome"></div>
+  <p class="count" id="count" role="status" aria-live="polite"></p>
+</section>
+
+<div class="legend" aria-label="Legend">
+  <span><i class="k k-died"></i>Died</span>
+  <span><i class="k k-survived"></i>Survived</span>
+  <span><i class="k k-other"></i>Custody, injured, unknown</span>
+  <span><i class="k k-spiral"></i>Spiral of time: 2009 inside, 2022 outside</span>
+</div>
+
+<div class="hud" role="toolbar" aria-label="View controls">
+  <button type="button" id="zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
+  <button type="button" id="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+  <button type="button" id="rl" title="Rotate left ([)" aria-label="Rotate left">⟲</button>
+  <button type="button" id="rr" title="Rotate right (])" aria-label="Rotate right">⟳</button>
+  <button type="button" id="spin" title="Slow rotation on or off (space)" aria-label="Slow rotation" aria-pressed="true">❚❚</button>
+  <button type="button" id="reset" title="Reset view (0)" aria-label="Reset view">⌂</button>
+</div>
+<p class="hint" id="hint">Drag to move · scroll or pinch to zoom · Shift + drag, Shift + scroll or two-finger twist to rotate · select a person to read their record</p>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="d-name" hidden tabindex="-1">
+  <div class="drawer-bar">
+    <button type="button" id="d-prev" aria-label="Previous person">← Earlier</button>
+    <button type="button" id="d-next" aria-label="Next person">Later →</button>
+    <button type="button" id="d-close" class="close" aria-label="Close">Close ✕</button>
+  </div>
+  <div id="d-body" class="drawer-body"></div>
+</aside>
+
+<script src="data/records.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

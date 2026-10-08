@@ -1,0 +1,11 @@
+{
+  "_readme": "Map a record id (e.g. cta-001) to a portrait file placed in this folder. Only add photographs whose identity and reuse rights you have checked. Then re-run: python3 scripts/build_records.py",
+  "_example": {
+    "cta-001": {
+      "file": "portraits/cta-001.jpg",
+      "credit": "Photographer or publisher name",
+      "source_url": "https://example.org/page-where-the-photo-was-published"
+    }
+  },
+  "portraits": {}
+}
