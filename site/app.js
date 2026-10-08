@@ -381,7 +381,7 @@
     { key: 'outcome', label: 'Outcome', get: p => cls(p), options: [['died', 'Died'], ['survived', 'Survived'], ['other', 'Custody, injured or unknown']] },
     { key: 'year', label: 'Year of protest', get: p => p.date.slice(0, 4), options: yearList.map(y => [y, y]), compact: true },
     { key: 'region', label: 'Place (province)', get: p => p.region, options: regionList.map(r => [r, r]),
-      note: 'All 157 protests in this record took place inside the People’s Republic of China. Exile cases (India, Nepal, the US and others) are not yet in this data.' },
+      note: 'All 157 protests in this record took place inside the People’s Republic of China. Exile cases (for example in Delhi and New York) are not yet in this data.' },
     { key: 'gender', label: 'Gender', get: p => p.gender || 'Not stated', options: [['Male', 'Men'], ['Female', 'Women'], ['Not stated', 'Not stated']] },
     { key: 'age', label: 'Age at the time', get: ageBucket, options: [['u20', 'Under 20'], ['20s', '20–29'], ['30s', '30–39'], ['40s', '40–49'], ['50+', '50 and over'], ['na', 'Not known']] },
   ];

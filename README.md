@@ -1,212 +1,194 @@
 # Tibetan Self-Immolations: A Visual Record
 
-An interactive radial graph, in 2D or 3D, of the 157 Tibetans recorded by the Central Tibetan Administration (CTA) as having self-immolated in protest between February 2009 and March 2022. Each person is a circle holding their photo (or initials until a photo is added), with their name and date underneath. Every circle has a line to one shared centre. You can drag, zoom and rotate the whole graph, and switch between a flat 2D spiral and a 3D sphere. Selecting a person opens their full record.
+**View the record: https://tenzin3.github.io/Tibetan-Self-Immolations-A-Visual-Record/**
 
-## Quick start
+Between February 2009 and March 2022, the Central Tibetan Administration (CTA) recorded 157 Tibetans who set themselves on fire in protest. This record shows every one of them by name. Each person is a circle, with their name and the date of their protest underneath, and all of them are linked to a single centre. Select anyone to read what is documented about them: age, home or monastery, where they protested, what happened to them afterwards, and the sources behind each fact.
 
-Open the page directly. No server or install is needed.
+> **Content note.** This record concerns protest by self-immolation, and most of the people in it died. It contains no images of the protests.
 
-```
-site/index.html      ← double-click, or drag into a browser
-```
+---
 
-If you change the data, rebuild it first (Python 3, standard library only):
+## At a glance
 
-```
-python3 scripts/build_records.py
-```
+| | |
+| --- | --- |
+| People recorded | **157** |
+| Separate incidents | **148** (some people protested together) |
+| Reported to have died | **136** |
+| Survived (later released or recovering) | **7** |
+| Taken into custody, injured with no later report, or outcome unknown | **14** |
+| Men / women | **131 / 25** (one record does not state gender; CTA's own summary counts 26 women) |
+| Ages (136 people with an exact age) | **15 to 81**, median **24**; 99 were under 30 and 33 were under 20 |
+| First recorded | **Tapey**, 27, a monk of Kirti monastery, Ngaba, 27 February 2009 (taken into custody) |
+| Most recent in this record | **Taphun**, 81, at Kirti, Ngaba, 27 March 2022 (died) |
 
-To serve it locally instead (optional): `cd site && python3 -m http.server 8000`, then open http://localhost:8000.
+The year 2012 accounts for **85** people, more than half of the total. In **November 2012** alone, 28 people set themselves on fire. Of the 125 people who died and whose date of death is recorded to the day, **104 died on the day of their protest**.
 
-## Publishing on GitHub Pages
+### By year
 
-The site is published automatically by `.github/workflows/pages.yml`. On every push to `main`, the workflow rebuilds the data (`scripts/build_records.py`) and publishes the `site/` folder.
+| Year | People | | Year | People |
+| --- | ---: | --- | --- | ---: |
+| 2009 | 1 | | 2016 | 3 |
+| 2010 | 0 | | 2017 | 6 |
+| 2011 | 12 | | 2018 | 2 |
+| 2012 | 85 | | 2019 | 1 |
+| 2013 | 26 | | 2020 | 0 |
+| 2014 | 11 | | 2021 | 0 |
+| 2015 | 8 | | 2022 | 2 |
 
-Live address: **https://tenzin3.github.io/Tibetan-Self-Immolations-A-Visual-Record/**
+A zero means no one appears in this table for that year. It does not prove that no protest took place.
 
-One-time setup:
-1. Push the repository: `git push origin main`.
-2. On GitHub, open the repository's **Settings → Pages**. Under **Build and deployment → Source**, choose **GitHub Actions**.
-3. Open the **Actions** tab. If the "Deploy site to GitHub Pages" run failed because Pages wasn't enabled yet, select it and choose **Re-run all jobs** (or use **Run workflow**).
-4. After about a minute, the address above is live. It also appears at the top of Settings → Pages.
+### By place
 
-After that, every `git push` to `main` updates the live site. `site/.nojekyll` tells GitHub to serve the files as they are.
+Every protest in this record took place inside the People's Republic of China. Most were in the traditional Tibetan regions of Amdo and Kham, which are now divided among Chinese provinces.
 
-## Project layout
+| Province (as recorded) | People |
+| --- | ---: |
+| Sichuan, mostly Ngaba (Aba) and Kardze (Ganzi) prefectures | 80 |
+| Qinghai | 33 |
+| Gansu | 33 |
+| Tibet Autonomous Region, including Lhasa | 10 |
+| Beijing (Passang Lhamo, 13 September 2012) | 1 |
 
-```
-.
-├── README.md                     this file
-├── .github/workflows/pages.yml   publishes site/ to GitHub Pages on every push to main
-├── data/
-│   ├── cta-records.json          SOURCE: 157 rows transcribed from the CTA fact sheet
-│   └── source-reported-counts.json   published totals from CTA and ICT (not reconciled)
-├── research/
-│   ├── SOURCES.md                source review, cautions and rules for the record
-│   └── date-corrections.json     15 reviewed corrections + 4 additional date checks
-├── scripts/
-│   └── build_records.py          merges the source data and corrections into site/data/
-└── site/                         the visualization (static files, no build tools)
-    ├── index.html                page structure (SVG graph, panels, record panel)
-    ├── styles.css                all styling
-    ├── app.js                    layout, camera (pan/zoom/rotate), motion, search, record panel
-    ├── data/
-    │   ├── records.json          GENERATED merged dataset (also linked as a download)
-    │   └── records.js            GENERATED same data as `window.VISUAL_RECORD = …`
-    └── portraits/
-        └── portraits.json        registry for verified portraits (empty for now)
-```
+---
 
-Files under `site/data/` are generated. Edit `data/` or `research/`, then re-run the build script.
+## How to explore the record
 
-The earlier prototype in `sites/visual-record/` was removed. It loaded a `data/records.json` file that never existed, so it showed no records. Everything it did is covered by `site/`. A first scrolling-timeline version of `site/` was then replaced by this radial graph.
+### Two views
+Switch with the **2D / 3D** buttons at the bottom right.
 
-## What the page shows
+- **2D: a spiral of time.** People are placed in date order along a spiral, from the earliest (2009) nearest the centre to the most recent (2022) on the outer edge. Each year is labelled where it begins, with its count.
+- **3D: a sphere of time.** The same people form a sphere around the centre, with 2009 at the top and 2022 at the bottom. Turn it in any direction to look around it.
 
-### The graph
-- **Centre (hub)**: a glowing disc reading "157 lives, 2009 – 2022". Every person is linked to it. Select the hub to open *About this record*: people by year, how to read the graph, and the scope of the data.
-- **People**: one circle per person, holding a portrait or initials. The **name** sits underneath, with the **date of the protest** below it.
-- **Lines**: each person has one line to the centre. Lines curve slightly so the graph reads as a turning spiral. A person's line lights up amber when you hover over, focus, or select them.
-- **Order is time**: people sit on a spiral. A dashed thread runs from the earliest (Tapey, February 2009), nearest the centre, out to the most recent (March 2022) at the edge. A wider gap opens before each new year, labelled with the year and its count (for example "2012, 85 people").
-- **Ring shows the reported outcome**:
-  - amber ring with a soft glow: died (136)
-  - pale green ring: survived, released or recovering (7)
-  - dashed grey ring: in custody, injured with no later report, or unknown (14)
-
-### 2D and 3D views
-The **2D / 3D** switch (bottom right; bottom centre on phones; keys `2` and `3`) changes the layout. When you switch, every circle travels from one layout to the other over about 1.3 seconds, and its line stays attached to the centre. The page remembers your last choice in this browser.
-
-| | 2D: spiral of time | 3D: sphere of time |
-| --- | --- | --- |
-| Shape | flat Archimedean spiral around the hub | Fibonacci sphere (evenly spaced points) around the hub |
-| Order | 2009 nearest the centre, 2022 on the outer edge | 2009 at the top pole, 2022 at the bottom |
-| Lines | gently curved, like spiral arms | straight spokes from the centre |
-| Time thread | dashed line along the spiral | dashed line joining people in date order |
-| Depth | none | people further away are smaller and dimmer; people behind the centre pass behind it (they are re-sorted continuously) |
-| Drag | moves the graph | turns the sphere in any direction |
-| Shift + drag | rotates | moves the graph |
-| ⟲ ⟳, twist, Shift + scroll | rotate the flat graph | spin the sphere around its vertical axis |
-| Slow rotation | turns around the centre | spins the sphere |
-| Opening a person | flies to them | turns the sphere so they face you, slightly off the centre, then zooms in |
-
-The 3D view uses a perspective projection drawn in the same SVG, with no 3D library. Every label, click, search highlight and record panel works identically in both views.
+In both views, every person has a line to the centre. A slow rotation runs until you pause it.
 
 ### Moving around
-| Action | Mouse / trackpad | Touch | Keyboard / buttons |
-| --- | --- | --- | --- |
-| Switch 2D / 3D | 2D / 3D buttons | 2D / 3D buttons | `2` / `3` |
-| Move (pan) | drag (2D); Shift + drag (3D) | one-finger drag (2D) | arrow keys (2D) |
-| Turn the sphere (3D) | drag | one-finger drag | arrow keys |
-| Zoom | scroll wheel, or trackpad pinch | pinch | `+` / `−`, or the + − buttons |
-| Rotate / spin | Shift + drag (2D), or Shift + scroll; Safari trackpad rotate | two-finger twist | `[` / `]`, or the ⟲ ⟳ buttons |
-| Slow automatic rotation | — | — | space, or the ❚❚ / ▶ button |
-| Reset view | — | — | `0`, or the ⌂ button |
-| Open a person | click | tap | Tab to a person, then Enter |
-
-Zoom works around the pointer or pinch point. Rotation turns around the centre, or around the pinch point for a twist. **Level of detail:** fully zoomed out, only the circles show; zooming in reveals names, then dates.
-
-### Motion
-| Effect | How it works | Where in the code |
+| To… | Mouse or trackpad | Phone or tablet |
 | --- | --- | --- |
-| Opening move | The graph starts small and slightly turned, then drifts in to fill the screen (2.2 s). | `app.js`, "Start" |
-| Slow rotation | The whole graph turns around the centre at about 2.6° per second. It pauses while you drag and while a record is open, and can be switched off. | `frame()`, `SPIN` |
-| Floating | Every circle drifts a few pixels on its own slow orbit. Speed and phase come from a hash of the record id, so the motion looks organic and is the same on every visit. Lines follow their circle. | `frame()` |
-| Upright labels | Names, years and the hub are counter-rotated every frame, so text stays level however the graph is turned. | `frame()` |
-| Hover | A circle grows, glows and lights its line. | `styles.css`, `.node:hover` |
-| Fly-to | Opening a person smoothly pans and zooms them to the middle of the visible area, beside the panel. | `flyTo()`, `viewFor()` |
-| Embers | Soft amber particles rise in a background canvas and drift as you pan (parallax). | `embers()` |
+| Zoom in or out | scroll, or pinch | pinch |
+| Move the graph | drag (2D) · Shift + drag (3D) | drag (2D) |
+| Rotate | Shift + drag (2D) · drag (3D) · ⟲ ⟳ buttons | two-finger twist · ⟲ ⟳ buttons |
+| Pause or resume the slow rotation | ❚❚ / ▶ button | ❚❚ / ▶ button |
+| Return to the full view | ⌂ button | ⌂ button |
 
-When the visitor's system asks for **reduced motion**, the rotation, floating, opening move, fly-to and embers are all off. Everything else still works.
+Names appear as you zoom in, then dates. Keyboard users can press `Tab` to move between people and `Enter` to open one. Other keys: `+` `−` zoom, `[` `]` rotate, arrow keys move or turn, `2` / `3` switch views, `0` resets, `F` opens the filters, and space pauses the rotation.
 
-### Search and filters (top right)
-- **Search** matches names, aliases, places, monasteries, provinces and years; accents are ignored. Press Enter, or select "Show …", to fly to the first match.
-- **Opening and closing**: the panel starts **closed**, so the graph has the screen. Open it with the **Filters ▾** button (or the `F` key). Close it with the same button, **Hide ▴** inside the panel, `F`, or `Esc`. The badge on the button shows how many filters are on, and the page remembers whether you left the panel open.
-- **While it's closed**, active filters appear under the search box as small pills (for example "2012 ✕", "Women ✕"). Select a pill to remove that filter without reopening the panel.
-- **Filter groups**:
+### Finding someone
+- **Search** (top right) by name, other recorded names, place, monastery, province or year. Press Enter to go straight to the first match.
+- **Filters**: open them with the **Filters** button and close them with **Hide** or `F`. You can filter by:
+  - **Outcome**: died; survived; or custody, injured or unknown
+  - **Year of protest**: 2009 to 2022
+  - **Place**: province
+  - **Gender**
+  - **Age at the time**: under 20, 20s, 30s, 40s, 50 and over, or not known
 
-  | Group | Options | Source field |
-  | --- | --- | --- |
-  | Outcome | Died · Survived · Custody, injured or unknown | `outcome` |
-  | Year of protest | 2009 – 2022, one button per year | `date` |
-  | Place (province) | Sichuan · Qinghai · Gansu · Tibet Autonomous Region · Beijing | `region` |
-  | Gender | Men · Women · Not stated | `gender` |
-  | Age at the time | Under 20 · 20–29 · 30–39 · 40–49 · 50 and over · Not known | `age`; "20s", "late 30s" and similar go in their decade |
+  Choosing several options in one group adds them together (2012 *or* 2013). Choosing across groups narrows the list (women *and* 2012). Each option shows how many people it would match. While the panel is closed, your active filters appear as small tags that you can remove with one click.
+- People who match stay bright, and everyone else fades. The centre shows how many are shown, for example "12 of 157 shown".
 
-- **Combining**: options in the same group add together (2012 *or* 2013); different groups narrow each other (women *and* 2012). Search combines with all of them.
-- **Live counts**: every option shows how many people it would match given everything else selected. Options that would match no one are faded.
-- **Place, not country**: every protest in this record took place inside the People's Republic of China, so the place filter works by province. The panel says so. Exile cases (India, Nepal, the US and others) can get a country filter once they are added to the data.
-- **What you see**: matching people stay bright, with bold rings and lit lines, and everyone else fades. The centre changes from "157 lives" to "*n* of 157 shown". **Clear all** resets the search and every filter.
+### Reading a person's record
+Select a person, or the centre for an overview. The panel shows:
 
-### Record panel (select anyone)
-The panel shows:
-- portrait or initials, name, aliases and an outcome badge
-- date of protest, with the CTA value if it was corrected
-- age (marked approximate when published as "20s" and similar), gender and province
-- place of protest, monastery or village, and parents
-- for people who died: the date of death and the number of days after the protest
-- *Same day, same place*: links to the others from the same incident
-- *Notes on this record*: every correction, with the original value, the value used, the evidence and its certainty
-- *Sources*: every link behind the record
+- **Name** and any other names they are recorded under
+- **Date of protest**, and if it was corrected, the date the CTA gives
+- **Age** (marked as approximate when the source says "20s", "late 30s" and so on), **gender**, **province**
+- **Place of protest** and **monastery, village or occupation**
+- **Parents**, where recorded
+- **Outcome**: for people who died, the date of death and how many days after the protest; otherwise the status as reported
+- **Same day, same place**: others who protested with them
+- **Notes on this record**: any correction, with the original value, the value used, the evidence and its certainty
+- **Sources**: links to the fact sheet and any supporting reports
+- **As published**: the CTA's original date and status text, word for word
 
-**Earlier / Later** (or ← →) walk through people in date order, and the graph flies to each one. Esc closes the panel. The address becomes `#cta-050` and so on, so a link opens straight to that person; `#about` opens the about panel.
+Use **Earlier** and **Later** (or ← →) to walk through the record in date order. Each person has their own link, for example `…/#cta-001` for Tapey, which you can share.
 
-## How the data is built (`scripts/build_records.py`)
-
-1. Loads `data/cta-records.json` (157 records).
-2. Applies `research/date-corrections.json`. Corrections are applied to `incident_date`, `death_date`, `incident_location` and `affiliation`. **The original CTA value is never discarded**: each applied correction stores `original`, `used`, `certainty`, `evidence` and `url`. The `additional_checks` (for example "retain 2013-02-25" or "unresolved") are attached as notes.
-3. Parses the date of death from CTA status text in all its published forms (`Died on 6/4/2012`, `Died 13/3/2013`, `Died on 21/02/12`, `Died on 30 July 2012`, `Died in October 2018`). A month-only date is kept as month precision.
-4. Classifies the outcome: `died`, `survived` (released or recovering), `custody`, `injured`, or `unknown`.
-5. Derives the province from the place text. Province names in the text take priority; known place names are the fallback (Ngaba → Sichuan, Rebgong → Qinghai).
-6. Groups people with the same date and place into an `event_id`, and lists who shared it.
-7. Writes `site/data/records.json` and `site/data/records.js`, then prints summary figures.
-
-Check the current build: 157 people, 148 incidents, 136 reported dead (matches CTA's published 136), 25 women and 131 men (one record has no gender marked; CTA's own headline says 26 women), 15 corrections applied.
-
-### Record fields (`site/data/records.json` → `people[]`)
-
-| Field | Meaning |
+### What the colours mean
+| Ring | Meaning |
 | --- | --- |
-| `id` | `cta-` + CTA table position, e.g. `cta-007`. Stable; used in links. |
-| `position` | Row position in the CTA table (CTA's own numbering repeats 119 and skips 109). |
-| `name`, `aliases`, `initials` | Name as published, other recorded names, and initials for the placeholder. |
-| `gender`, `age`, `age_is_approximate` | As published. Approximate ages stay as text. |
-| `affiliation`, `location`, `region` | Monastery or village; place of protest; derived province. |
-| `father`, `mother` | When recorded. |
-| `date`, `date_as_published` | Date used (after review) and the CTA text. |
-| `outcome`, `outcome_label`, `status_as_published` | Category, display label, and the CTA status text. |
-| `death_date`, `death_date_precision`, `days_until_death` | Parsed or corrected date of death. |
-| `corrections`, `checks`, `notes` | Review trail. |
-| `sources` | Every URL behind the record. |
-| `event_id`, `shared_with` | Incident grouping. |
-| `portrait` | `null`, or `{file, credit, source_url}` from the portrait registry. |
+| Glowing gold | Reported to have died |
+| Green | Survived: later released, or reported recovering |
+| Dashed grey | Taken into custody, injured with no later report, or outcome unknown |
+| Initials inside the circle | No verified photograph has been added for this person yet |
 
-## Adding portraits
+---
 
-The source data contains no photographs, and `research/SOURCES.md` requires each image to have its own provenance and reuse check. So the page shows initials until a verified portrait is registered. No portraits are generated.
+## Sources
 
-1. Save the photo as `site/portraits/cta-007.jpg` (use the record id).
-2. Add it to `site/portraits/portraits.json`:
-   ```json
-   "portraits": {
-     "cta-007": {
-       "file": "portraits/cta-007.jpg",
-       "credit": "Photographer or publisher",
-       "source_url": "https://page-where-it-was-published"
-     }
-   }
-   ```
-3. Run `python3 scripts/build_records.py`. The circle in the graph, the record panel and the credit line update automatically. Photos are cropped to a circle.
+### The record itself
+- **Central Tibetan Administration (CTA)**, *Fact sheet on Tibetan self-immolation protests in Tibet since February 2009*: https://tibet.net/important-issues/factsheet-immolation-2011-2012/
+  All 157 people come from this table. Its page says it was last updated on 14 March 2022, though its last entry is dated 27 March 2022. It was transcribed on 8 October 2026. The CTA is the Tibetan administration in exile.
 
-## Design notes
-- **Palette** ("Himalayan night"): deep indigo ground `#0c1220`, raised panels `#151d30`, slate-blue lines `#34466e`, snow-white text `#eef1f6`, saffron accent `#f2b134` (died, years, highlights), and prayer-flag green `#6cc29a` (survived). The page uses one deliberate dark theme.
-- **Changing the palette**: edit the colour tokens at the top of `site/styles.css` (`:root`). Three colours live outside that block: the gradient stops in the `<defs>` of `site/index.html` (halo, hub, circle face) and the ember colour in `site/app.js` (`rgba(242,177,52, …)`).
-- **Type**: Cormorant Garamond for the title, years and hub; Instrument Sans for names and reading; JetBrains Mono for dates and labels. All come from Google Fonts, with system fallbacks.
-- **Geometry** (top of the layout section in `app.js`): circle radius `NODE_R` 20, spacing along the spiral `S` 80, distance between turns `TURN` 92, inner radius `R0` 175, year gap `YEAR_GAP` 1.9×S. These values keep names from overlapping their neighbours.
-- **Camera**: 2D: `screen = centre + offset + zoom · rotation · world`. 3D: each point is turned by `yaw` (around the vertical axis) and `pitch` (tilt), given perspective (`PERSP` 1600), then offset and zoomed. A `mix` value from 0 to 1 blends the two layouts during the switch. Pan, zoom and rotate math is in `zoomAt()`, `rotateAt()` and `orbit()`; the 3D sphere radius is `R3` 520.
-- **Accessibility**: every person is focusable, with a spoken label (name, date, outcome). The hub and all controls work from the keyboard. The record panel keeps focus inside while it is open and returns focus to the person when it closes. The layout works at phone width.
+### Used to compare and check
+- **International Campaign for Tibet (ICT)**, *Tibetan self-immolations* fact sheet: https://savetibet.org/tibetan-self-immolations/
+  ICT counts **159** people inside Tibet and China since 2009, plus **11** in exile (updated 3 July 2026). ICT is an advocacy organisation.
+- **ICT**, compiled list of self-immolations (PDF, August 2024): https://savetibet.org/wp-content/uploads/2024/08/20240820-self-immolations.pdf
+- **ICT**, map of self-immolations, 2009–2017: https://savetibet.org/why-tibet/self-immolations-by-tibetans/map-tibetan-self-immolations-from-2009-2013/
+- **Radio Free Asia (RFA)**, report on Tsering Samdup, Kyegudo (Yushu), 30 March 2022: https://www.rfa.org/english/news/tibet/yushul-immolation-03312022125553.html
 
-## Known limits and next steps
-- Covers the **CTA table only**. Still to add: the 11 exile cases listed by ICT (including Thubten Ngodrup, Delhi, 1998, and Lobga Rangzen, New York, 2026) and the 30 March 2022 RFA report of Tsering Samdup.
-- Two date conflicts are flagged and left unchanged: Sangdak (cta-107) and Tadin Kyab / Tamdrin Kyab (cta-083).
-- Outcomes are what was reported at the time, not current status.
-- Province is derived from free text. A map view would need verified coordinates with stated precision (see `research/SOURCES.md`, rule 6).
+### Contemporary reports behind individual corrections and checks
+| Person | Report |
+| --- | --- |
+| Choephel | Human Rights Watch, open letter to the President of China, 3 Nov 2011: https://www.hrw.org/news/2011/11/03/open-letter-president-peoples-republic-china-self-immolations-tibetan-populated |
+| Lobsang Tsultrim, Tennyi | ICT, 9 Jan 2012: https://savetibet.org/tibetan-self-immolations-continue-and-spread-in-tibet-into-2012/ |
+| Sonam Rabyang | RFA, 9 Feb 2012: https://www.rfa.org/english/news/tibet/another-02092012170023.html |
+| Sangay Dolma | ICT, *Acts of significant evil*, case details: https://savetibet.org/acts-of-significant-evil-case-details/ |
+| Wangyal | Voice of America: https://www.voanews.com/a/three-tibetans-self-immolate-in-china-amid-protests/1553295.html |
+| Kunchok Phelgye | ICT: https://savetibet.org/three-tibetans-self-immolate-in-two-days-during-important-buddhist-anniversary-images-of-troops-in-lhasa-as-tibetans-pray/ |
+| Drukpa Khar | RFA, 17 Feb 2013: https://www.rfa.org/english/news/tibet/burning-02172013112417.html |
+| Tsesung Kyab | ICT: https://savetibet.org/two-tibetans-self-immolate-at-monasteries-during-prayer-ceremonies-in-amdo/ |
+| Kunchok Woeser | RFA, 24 Apr 2013: https://www.rfa.org/english/news/tibet/protests-04242013160540.html |
+| Jamyang Losal | ICT: https://savetibet.org/young-tibetan-monk-becomes-the-150th-self-immolator-in-tibet/ |
+| Tenga | ICT: https://savetibet.org/respected-tibetan-monk-sets-fire-to-himself-in-eastern-tibet/ |
+
+---
+
+## How the information was checked
+
+1. **Every row of the CTA table** was transcribed: 157 people in table order. The CTA's own numbering repeats 119 and skips 109, so the position in the table is used instead. Original spellings, approximate ages ("20s", "late 30s") and missing values are kept as published. Gender is never guessed.
+2. **Anomalies were compared with contemporary reporting**, such as dates that couldn't be right (a death recorded before the protest) and places that conflicted with other reports. Where strong evidence supported a different value, it was corrected. The CTA's original value is always kept and shown next to the correction.
+3. **Totals were checked against the CTA's published summary.** The yearly counts and the 136 reported deaths match. The CTA summary counts 26 women; in the table itself, 25 are marked female and one has no gender marked.
+4. **Outcomes are reported as historical claims.** "Died", "released" and "whereabouts unknown" describe what was reported at the time, not anyone's situation today. A missing death report is never treated as survival.
+
+### Corrections applied (15)
+| Person | What changed | From (CTA) | To | Certainty |
+| --- | --- | --- | --- | --- |
+| Choephel | date of protest | 7/11/2011 (after his recorded death) | 7 Oct 2011 | high |
+| Lobsang Tsultrim | date of protest; date of death | 06/12/2012; 07/12/2012 | 6 Jan 2012; 7 Jan 2012 | high |
+| Tennyi | date of protest; date of death | 06/12/2012 | 6 Jan 2012 | high |
+| Sonam Rabyang | date of protest | 08/02/12 | 9 Feb 2012 | medium |
+| Sangay Dolma | place | Dokarmo, Tsekhog, "Gansu Province" | Dokarmo town, Tsekhog (Zeku) County, Qinghai | high |
+| Kunchok Phelgye | place; monastery | "Monk of Dringwa Sumdo monastery, Dzoege"; Gonda Dewa village | outside the main hall of Taktsang Lhamo Kirti monastery, Dzoege; previously Dringwa Sumdo monastery | high |
+| Drukpa Khar | place | Amchok, Sangchu County, "Ngaba … Sichuan" | Amchok, Sangchu (Xiahe) County, Kanlho, Gansu | high |
+| Kunchok Woeser | date of death | 24/4/2103 (misprint) | 24 Apr 2013 | high |
+| Jamyang Losal | date of protest; date of death; place | 18 May 2017; in front of the Mani temple, Chentsa | 19 May 2017; near the county hospital, Chentsa | high |
+| Tenga | place | main road near Kirti monastery, Ngaba | Kardze (Ganzi), Kham | high |
+
+### Checked and left as published
+- **Wangyal**: 26 November 2012 confirmed by Voice of America.
+- **Tsesung Kyab**: 25 February 2013 confirmed by ICT's contemporary report.
+
+### Still unresolved
+- **Tadin Kyab / Tamdrin Kyab**: the CTA gives 22 November 2012, and ICT's compilation gives 23 November.
+- **Sangdak**: the CTA gives 25 February 2013, and ICT's compilation gives 24 February.
+
+These are shown in each person's record.
+
+---
+
+## What this record does not yet include
+
+- **Exile protests.** ICT lists 11 people who self-immolated outside Tibet. They include Thubten Ngodrup in Delhi on 27 April 1998 and Lobga Rangzen in New York on 2 July 2026.
+- **The gap between the two main counts.** ICT counts 159 people inside Tibet and China, two more than the CTA table. The difference has not yet been reconciled person by person.
+- **Tsering Samdup**, reported by RFA on 30 March 2022 in Kyegudo (Yushu), whose condition was unknown at the time of reporting.
+- **Photographs.** Each portrait will be added only after the person's identity and the right to use the image have been checked. Until then, each person is shown by their initials.
+- **Exact locations.** Places are shown as published. No map is drawn, because a county name is not a precise location.
+
+Multiple outlets repeating one witness account are not independent confirmation. Agreement between the CTA and ICT lists is a documentary check, not eyewitness verification.
+
+---
+
+## For maintainers (brief)
+
+- The page is in `site/` and opens directly in a browser. The published site updates automatically on every push to `main` (`.github/workflows/pages.yml`). One-time setup: on GitHub, go to **Settings → Pages → Source** and choose **GitHub Actions**.
+- To change the information, edit `data/cta-records.json` or `research/date-corrections.json`, then run `python3 scripts/build_records.py`.
+- To add a portrait, save it as `site/portraits/<record id>.jpg` (for example `cta-001.jpg`), register it with its credit and source link in `site/portraits/portraits.json`, and rebuild.
+- `research/SOURCES.md` holds the full source review and the rules this record follows.
