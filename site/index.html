@@ -14,7 +14,7 @@
 <canvas id="embers" aria-hidden="true"></canvas>
 
 <svg id="graph" aria-labelledby="graph-title" aria-describedby="hint">
-  <title id="graph-title">Graph of 157 people, each linked to the centre, arranged in a spiral from 2009 at the centre to 2022 at the edge</title>
+  <title id="graph-title">Graph of 157 people, each linked to the centre, shown as a flat spiral or a 3D sphere, in date order from 2009 to 2022</title>
   <defs>
     <clipPath id="clip-circle" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath>
     <radialGradient id="g-halo">
@@ -34,10 +34,12 @@
   </defs>
   <g id="world">
     <path id="thread" class="thread"/>
+    <path id="thread3" class="thread"/>
     <g id="links"></g>
     <g id="years"></g>
-    <g id="nodes"></g>
+    <g id="nodes-back"></g>
     <g id="hub" class="hub" role="button" tabindex="0" aria-label="About this record"></g>
+    <g id="nodes"></g>
   </g>
 </svg>
 
@@ -58,9 +60,13 @@
   <span><i class="k k-died"></i>Died</span>
   <span><i class="k k-survived"></i>Survived</span>
   <span><i class="k k-other"></i>Custody, injured, unknown</span>
-  <span><i class="k k-spiral"></i>Spiral of time: 2009 inside, 2022 outside</span>
+  <span><i class="k k-spiral"></i><span id="legend-order">Spiral of time: 2009 inside, 2022 outside</span></span>
 </div>
 
+<div class="modes" id="modes" role="group" aria-label="View">
+  <button type="button" data-mode="2d" aria-pressed="true" title="Flat spiral (key 2)">2D</button>
+  <button type="button" data-mode="3d" aria-pressed="false" title="Sphere you can turn (key 3)">3D</button>
+</div>
 <div class="hud" role="toolbar" aria-label="View controls">
   <button type="button" id="zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
   <button type="button" id="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>

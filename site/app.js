@@ -57,14 +57,30 @@
   });
   const EXTENT = b * theta + NODE_R + 50;
 
-  /* ---------- Build SVG ---------- */
-  const svg = $('#graph'), world = $('#world'), gLinks = $('#links'), gNodes = $('#nodes'), gYears = $('#years'), gHub = $('#hub');
+  /* ---------- 3D layout: a sphere of time around the hub ----------
+     Fibonacci sphere, in date order: 2009 at the top pole, 2022 at the bottom.
+     Each year label floats just outside the sphere beside that year's first person. */
+  const R3 = 520, PERSP = 1600, GOLDEN = Math.PI * (3 - Math.sqrt(5));
+  people.forEach((p, i) => {
+    const v = 1 - 2 * (i + .5) / people.length, ring = Math.sqrt(1 - v * v), phi = i * GOLDEN;
+    p.x3 = R3 * ring * Math.cos(phi); p.y3 = -R3 * v; p.z3 = R3 * ring * Math.sin(phi);
+  });
+  yearMarks.forEach(m => {
+    const first = people.find(p => p.date.startsWith(m.year));
+    // just outside the sphere, beside the first person of that year
+    m.x3 = first.x3 * 1.2; m.y3 = first.y3 * 1.2 - 34; m.z3 = first.z3 * 1.2;
+  });
+  const EXTENT3 = R3 + 120;
 
-  // faint dashed thread tracing the spiral (time)
+  /* ---------- Build SVG ---------- */
+  const svg = $('#graph'), world = $('#world'), gLinks = $('#links'), gNodes = $('#nodes'), gBack = $('#nodes-back'), gYears = $('#years'), gHub = $('#hub');
+  const thread2 = $('#thread'), thread3 = $('#thread3');
+
+  // faint dashed thread tracing the 2D spiral (time)
   {
     const pts = []; const th0 = R0 / b - .6;
     for (let th = th0; th <= theta; th += .05) { const q = at(th); pts.push(`${q.x.toFixed(1)},${q.y.toFixed(1)}`); }
-    $('#thread').setAttribute('d', 'M' + pts.join('L'));
+    thread2.setAttribute('d', 'M' + pts.join('L'));
   }
 
   const splitName = name => {
@@ -110,70 +126,156 @@
   el('text', { class: 'yrs', y: -36 }, gHub).textContent = `${meta.first_year} – ${meta.last_year}`;
   el('text', { class: 'yrs', y: 52 }, gHub).textContent = 'about this record';
 
-  /* ---------- Camera ---------- */
-  const cam = { x: 0, y: 0, k: 1, rot: 0 }; // rot in radians
-  let W = innerWidth, H = innerHeight, tween = null;
+  /* ---------- Camera ----------
+     2D: screen = C + T + k · R(rot) · world.
+     3D: world point is turned by yaw (around the vertical axis) and pitch (tilt),
+         then given perspective, then screen = C + T + k · projected.
+     `mix` blends the two layouts (0 = flat spiral, 1 = sphere) while switching. */
+  const cam = { x: 0, y: 0, k: 1, rot: 0, yaw: 0, pitch: -.3 };
+  let W = innerWidth, H = innerHeight, tween = null, mode = '2d', mix = 0, mixTween = null;
+  const is3D = () => mode === '3d';
   const K_MIN = .18, K_MAX = 5;
-  const fitK = () => Math.max(K_MIN, Math.min(W, H - (W < 640 ? 230 : 120)) / (2 * EXTENT));
+  const fitK = (m = mode) => Math.max(K_MIN, Math.min(W, H - (W < 640 ? 250 : 120)) / (2 * (m === '3d' ? EXTENT3 : EXTENT)));
+  const restY = () => W <= 640 ? 50 : 10;
   const clampK = k => Math.min(K_MAX, Math.max(K_MIN, k));
+  const clampPitch = p => Math.max(-1.45, Math.min(1.45, p));
   function zoomAt(sx, sy, factor) {
     const k2 = clampK(cam.k * factor), f = k2 / cam.k;
     const vx = sx - W / 2 - cam.x, vy = sy - H / 2 - cam.y;
     cam.x = sx - W / 2 - f * vx; cam.y = sy - H / 2 - f * vy; cam.k = k2;
   }
   function rotateAt(sx, sy, d) {
+    if (is3D()) { cam.yaw += d; return; }
     const c = Math.cos(d), s = Math.sin(d), px = W / 2 + cam.x - sx, py = H / 2 + cam.y - sy;
     cam.x = sx - W / 2 + (c * px - s * py); cam.y = sy - H / 2 + (s * px + c * py); cam.rot += d;
   }
+  const orbit = (dx, dy) => { cam.yaw += dx * .006; cam.pitch = clampPitch(cam.pitch - dy * .006); };
   const hubScreen = () => [W / 2 + cam.x, H / 2 + cam.y];
   const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const nearAngle = (target, from) => target + Math.round((from - target) / (2 * Math.PI)) * 2 * Math.PI;
   function flyTo(target, ms = 750) {
-    if (reduceMotion) { Object.assign(cam, target); return; }
-    tween = { from: { ...cam }, to: target, t0: performance.now(), ms };
+    const to = { ...cam, ...target };
+    to.yaw = nearAngle(to.yaw, cam.yaw);
+    if (reduceMotion) { Object.assign(cam, to); return; }
+    tween = { from: { ...cam }, to, t0: performance.now(), ms };
   }
   function viewFor(p, k) {
     // put person p at the visible centre (left of the drawer on wide screens)
     const offX = W > 640 && drawerOpen ? -Math.min(440, W) / 2 : 0, offY = W <= 640 && drawerOpen ? -H * .3 : 0;
+    if (is3D()) {
+      // turn the sphere so p faces the viewer, then centre the sphere's front
+      // face p towards the viewer, tilted ~30° off-axis so it does not sit on top of the hub
+      const yaw = Math.atan2(-p.x3, p.z3), pitch = clampPitch(Math.atan2(p.y3, Math.hypot(p.x3, p.z3)) + (p.y3 > 0 ? -.55 : .55));
+      const x1 = p.x3 * Math.cos(yaw) + p.z3 * Math.sin(yaw), z1 = -p.x3 * Math.sin(yaw) + p.z3 * Math.cos(yaw);
+      const y2 = p.y3 * Math.cos(pitch) - z1 * Math.sin(pitch), z2 = p.y3 * Math.sin(pitch) + z1 * Math.cos(pitch), f = PERSP / (PERSP - z2);
+      const k3 = k / (f * .9) * 1.05;
+      return { k: k3, yaw, pitch, x: offX - k3 * x1 * f, y: offY - k3 * y2 * f };
+    }
     const c = Math.cos(cam.rot), s = Math.sin(cam.rot);
-    return { k, rot: cam.rot, x: offX - k * (c * p.wx - s * p.wy), y: offY - k * (s * p.wx + c * p.wy) };
+    return { k, x: offX - k * (c * p.wx - s * p.wy), y: offY - k * (s * p.wx + c * p.wy) };
   }
-  const resetView = () => flyTo({ x: 0, y: W <= 640 ? 60 : 10, k: fitK(), rot: 0 }, 900);
+  const resetView = () => flyTo(is3D() ? { x: 0, y: restY(), k: fitK(), yaw: 0, pitch: -.3 } : { x: 0, y: restY(), k: fitK(), rot: 0 }, 900);
 
   /* ---------- Render loop ---------- */
-  let spinning = !reduceMotion, interacting = false, drawerOpen = false, lastT = performance.now(), lastRotDeg = null, lastLod = '';
-  const SPIN = 0.045; // radians per second
+  let spinning = !reduceMotion, interacting = false, drawerOpen = false, lastT = performance.now(), lastLod = '', frameNo = 0, sorted3D = false;
+  const SPIN = 0.045, SPIN3 = 0.16; // radians per second
   function frame(t) {
-    const dt = Math.min(64, t - lastT); lastT = t;
+    const dt = Math.min(64, t - lastT); lastT = t; frameNo++;
     if (tween) {
       const u = Math.min(1, (t - tween.t0) / tween.ms), e = ease(u);
-      for (const key of ['x', 'y', 'k', 'rot']) cam[key] = tween.from[key] + (tween.to[key] - tween.from[key]) * e;
+      for (const key of ['x', 'y', 'k', 'rot', 'yaw', 'pitch']) cam[key] = tween.from[key] + (tween.to[key] - tween.from[key]) * e;
       if (u >= 1) tween = null;
     } else if (spinning && !interacting && !drawerOpen) {
-      const [hx, hy] = hubScreen(); rotateAt(hx, hy, SPIN * dt / 1000);
+      if (is3D()) cam.yaw += SPIN3 * dt / 1000; else { const [hx, hy] = hubScreen(); rotateAt(hx, hy, SPIN * dt / 1000); }
     }
-    const deg = cam.rot * 180 / Math.PI;
-    world.setAttribute('transform', `translate(${(W / 2 + cam.x).toFixed(2)} ${(H / 2 + cam.y).toFixed(2)}) scale(${cam.k.toFixed(4)}) rotate(${deg.toFixed(3)})`);
-    const counter = `rotate(${(-deg).toFixed(3)})`;
-    const rotChanged = deg !== lastRotDeg; lastRotDeg = deg;
+    if (mixTween) {
+      const u = Math.min(1, (t - mixTween.t0) / mixTween.ms);
+      mix = mixTween.from + (mixTween.to - mixTween.from) * ease(u);
+      if (u >= 1) mixTween = null;
+    }
+    const m = mix;
+    world.setAttribute('transform', `translate(${(W / 2 + cam.x).toFixed(2)} ${(H / 2 + cam.y).toFixed(2)}) scale(${cam.k.toFixed(4)})`);
+    const c2 = Math.cos(cam.rot), s2 = Math.sin(cam.rot);
+    const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+    const proj = (x, y, z) => {
+      const x1 = x * cy + z * sy, z1 = -x * sy + z * cy;
+      const y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp, f = PERSP / (PERSP - z2);
+      return [x1 * f, y2 * f, f, z2];
+    };
+    const thread3pts = m > 0 ? [] : null;
     for (const p of people) {
-      let x = p.wx, y = p.wy;
-      if (!reduceMotion) { x += Math.sin(t * p.sp1 + p.ph1) * 4; y += Math.cos(t * p.sp2 + p.ph2) * 4; }
-      p.g.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
-      if (rotChanged) p.upright.setAttribute('transform', counter);
-      if (!reduceMotion || !p.linkDone) {
-        // gentle swirl: control point trails behind the person, like a spiral arm
-        const cr = p.wr * .55, ca = p.wa - .42;
-        p.link.setAttribute('d', `M0,0Q${(cr * Math.cos(ca)).toFixed(1)},${(cr * Math.sin(ca)).toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`);
-        p.linkDone = true;
+      let fx = 0, fy = 0;
+      if (!reduceMotion) { fx = Math.sin(t * p.sp1 + p.ph1) * 4; fy = Math.cos(t * p.sp2 + p.ph2) * 4; }
+      const ax = c2 * (p.wx + fx) - s2 * (p.wy + fy), ay = s2 * (p.wx + fx) + c2 * (p.wy + fy);
+      let x = ax, y = ay, sc = 1, op = 1, cx, cyy;
+      const cr = p.wr * .55, ca = p.wa - .42, lx = cr * Math.cos(ca), ly = cr * Math.sin(ca);
+      cx = c2 * lx - s2 * ly; cyy = s2 * lx + c2 * ly;
+      if (m > 0) {
+        const [qx, qy, f, z] = proj(p.x3, p.y3, p.z3);
+        p.z = z;
+        const depth = (z + R3) / (2 * R3); // 0 = far side, 1 = nearest
+        x = ax + (qx + fx - ax) * m; y = ay + (qy + fy - ay) * m;
+        sc = 1 + (f * .9 - 1) * m; op = 1 + (.22 + .78 * depth - 1) * m;
+        cx = cx + (x / 2 - cx) * m; cyy = cyy + (y / 2 - cyy) * m;
+        thread3pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
       }
+      p.g.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
+      p.upright.setAttribute('transform', sc === 1 ? '' : `scale(${sc.toFixed(3)})`);
+      p.upright.style.opacity = op === 1 ? '' : op.toFixed(3);
+      p.link.style.opacity = op === 1 ? '' : (op * op).toFixed(3);
+      p.link.setAttribute('d', `M0,0Q${cx.toFixed(1)},${cyy.toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`);
     }
-    if (rotChanged) { yearMarks.forEach(m => m.g.setAttribute('transform', `translate(${m.x.toFixed(1)} ${m.y.toFixed(1)}) ${counter}`)); gHub.setAttribute('transform', counter); }
+    // paint order: in 3D, people behind the hub go in the back layer, sorted far to near
+    if (m > .5 && (frameNo % 8 === 0 || !sorted3D)) {
+      const active = document.activeElement;
+      [...people].sort((a, c) => a.z - c.z).forEach(p => (p.z < 0 ? gBack : gNodes).appendChild(p.g));
+      if (active && active.classList && active.classList.contains('node') && document.activeElement !== active) active.focus({ preventScroll: true });
+      sorted3D = true;
+    } else if (m <= .5 && sorted3D) {
+      people.forEach(p => gNodes.appendChild(p.g)); sorted3D = false;
+    }
+    yearMarks.forEach(ym => {
+      let x = c2 * ym.x - s2 * ym.y, y = s2 * ym.x + c2 * ym.y, op = 1, sc = 1;
+      if (m > 0) {
+        const [qx, qy, f, z] = proj(ym.x3, ym.y3, ym.z3);
+        x += (qx - x) * m; y += (qy - y) * m; sc = 1 + (f - 1) * m; op = 1 + (.25 + .75 * (z + R3) / (2 * R3) - 1) * m;
+      }
+      ym.g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(3)})`);
+      ym.g.style.opacity = op.toFixed(3);
+    });
+    thread2.setAttribute('transform', `rotate(${(cam.rot * 180 / Math.PI).toFixed(3)})`);
+    thread2.style.opacity = (1 - m).toFixed(3);
+    if (thread3pts) thread3.setAttribute('d', 'M' + thread3pts.join('L'));
+    thread3.style.opacity = m.toFixed(3);
     const lod = cam.k < .42 ? 'far' : cam.k < .75 ? 'mid' : '';
     if (lod !== lastLod) { svg.classList.toggle('far', lod === 'far'); svg.classList.toggle('mid', lod === 'mid'); lastLod = lod; }
     requestAnimationFrame(frame);
   }
 
-  /* ---------- Pointer: drag = pan, Shift+drag = rotate, two fingers = pinch zoom + twist ---------- */
+  /* ---------- 2D / 3D switch ---------- */
+  const HINTS = {
+    '2d': 'Drag to move · scroll or pinch to zoom · Shift + drag, Shift + scroll or two-finger twist to rotate · select a person to read their record',
+    '3d': 'Drag to turn the sphere · scroll or pinch to zoom · Shift + drag to move · select a person to read their record',
+  };
+  const LEGEND = { '2d': 'Spiral of time: 2009 inside, 2022 outside', '3d': 'Sphere of time: 2009 at the top, 2022 at the bottom' };
+  function setMode(next, animate = true) {
+    if (next !== '2d' && next !== '3d') return;
+    mode = next;
+    $$('#modes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+    $('#hint').textContent = HINTS[mode]; $('#legend-order').textContent = LEGEND[mode];
+    svg.classList.toggle('three', mode === '3d');
+    const target = mode === '3d' ? 1 : 0;
+    if (!animate || reduceMotion) { mix = target; mixTween = null; }
+    else mixTween = { from: mix, to: target, t0: performance.now(), ms: 1300 };
+    if (openId && byId.get(openId)) flyTo(viewFor(byId.get(openId), 1.7), 1300);
+    else if (animate) flyTo(mode === '3d' ? { x: 0, y: restY(), k: fitK(), pitch: -.3 } : { x: 0, y: restY(), k: fitK() }, 1300);
+    try { localStorage.setItem('tsi-view', mode); } catch {}
+  }
+  $$('#modes button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+  /* ---------- Pointer ----------
+     2D: drag = pan, Shift+drag = rotate.  3D: drag = turn the sphere, Shift+drag = pan.
+     Two fingers: pinch to zoom, twist to rotate (both views). */
   const pts = new Map();
   let downInfo = null, gesture = null;
   svg.addEventListener('pointerdown', e => {
@@ -201,7 +303,10 @@
     if (!downInfo) return;
     if (!downInfo.moved && Math.hypot(cur.x - downInfo.x, cur.y - downInfo.y) < 5) return;
     downInfo.moved = true; svg.classList.add('dragging');
-    if (downInfo.shift || e.shiftKey) {
+    const shift = downInfo.shift || e.shiftKey;
+    if (is3D()) {
+      if (shift) { cam.x += cur.x - prev.x; cam.y += cur.y - prev.y; } else orbit(cur.x - prev.x, cur.y - prev.y);
+    } else if (shift) {
       const [hx, hy] = hubScreen();
       const a0 = Math.atan2(prev.y - hy, prev.x - hx), a1 = Math.atan2(cur.y - hy, cur.x - hx);
       rotateAt(hx, hy, a1 - a0);
@@ -232,12 +337,12 @@
   svg.addEventListener('gesturestart', e => { e.preventDefault(); gs = { s: e.scale, r: e.rotation }; });
   svg.addEventListener('gesturechange', e => { e.preventDefault(); if (!gs) return; zoomAt(e.clientX, e.clientY, e.scale / gs.s); rotateAt(e.clientX, e.clientY, (e.rotation - gs.r) * Math.PI / 180); gs = { s: e.scale, r: e.rotation }; });
 
-  // hover highlight of a person's line
-  gNodes.addEventListener('pointerover', e => { const n = e.target.closest('.node'); if (n) byId.get(n.dataset.id).link.classList.add('on'); });
-  gNodes.addEventListener('pointerout', e => { const n = e.target.closest('.node'); if (n && n.dataset.id !== openId) byId.get(n.dataset.id).link.classList.remove('on'); });
-  gNodes.addEventListener('focusin', e => { const n = e.target.closest('.node'); if (n) byId.get(n.dataset.id).link.classList.add('on'); });
-  gNodes.addEventListener('focusout', e => { const n = e.target.closest('.node'); if (n && n.dataset.id !== openId) byId.get(n.dataset.id).link.classList.remove('on'); });
-  gNodes.addEventListener('keydown', e => { const n = e.target.closest('.node'); if (n && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPerson(n.dataset.id); } });
+  // hover highlight of a person's line (people live in two layers, so listen on the world group)
+  world.addEventListener('pointerover', e => { const n = e.target.closest('.node'); if (n) byId.get(n.dataset.id).link.classList.add('on'); });
+  world.addEventListener('pointerout', e => { const n = e.target.closest('.node'); if (n && n.dataset.id !== openId) byId.get(n.dataset.id).link.classList.remove('on'); });
+  world.addEventListener('focusin', e => { const n = e.target.closest('.node'); if (n) byId.get(n.dataset.id).link.classList.add('on'); });
+  world.addEventListener('focusout', e => { const n = e.target.closest('.node'); if (n && n.dataset.id !== openId) byId.get(n.dataset.id).link.classList.remove('on'); });
+  world.addEventListener('keydown', e => { const n = e.target.closest('.node'); if (n && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPerson(n.dataset.id); } });
   gHub.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAbout(); } });
 
   /* ---------- Toolbar & keyboard ---------- */
@@ -251,10 +356,12 @@
   setSpin(spinning);
   $('#spin').addEventListener('click', () => setSpin(!spinning));
   $('#reset').addEventListener('click', resetView);
+  const arrow = (dx, dy) => { if (is3D()) orbit(dx * -.5, dy * -.5); else { cam.x += dx; cam.y += dy; } };
   document.addEventListener('keydown', e => {
     if (e.target.matches('input, textarea') || drawerOpen) return;
     const map = { '+': () => zoomBtn(1.4), '=': () => zoomBtn(1.4), '-': () => zoomBtn(1 / 1.4), '_': () => zoomBtn(1 / 1.4), '[': () => rotBtn(-Math.PI / 8), ']': () => rotBtn(Math.PI / 8), '0': resetView,
-      ArrowLeft: () => { cam.x += 60; }, ArrowRight: () => { cam.x -= 60; }, ArrowUp: () => { cam.y += 60; }, ArrowDown: () => { cam.y -= 60; } };
+      '2': () => setMode('2d'), '3': () => setMode('3d'),
+      ArrowLeft: () => arrow(60, 0), ArrowRight: () => arrow(-60, 0), ArrowUp: () => arrow(0, 60), ArrowDown: () => arrow(0, -60) };
     if (e.key === ' ' && !e.target.closest('button, .node, .hub')) { e.preventDefault(); setSpin(!spinning); return; }
     if (map[e.key] && !e.target.closest('button') ) { e.preventDefault(); tween = null; map[e.key](); }
   });
@@ -335,13 +442,13 @@
     return `<div class="about">
       <p class="eyebrow">About this record</p>
       <h2 id="d-name">${meta.people} people, ${meta.first_year}–${meta.last_year}</h2>
-      <p>Every circle is one person recorded by the <a href="${esc(meta.source_url)}" target="_blank" rel="noopener">Central Tibetan Administration</a> as having set themselves on fire in protest. All of them are linked to this centre. They are placed on a spiral of time: the earliest, Tapey in February 2009, sits nearest the centre, and the most recent, in March 2022, sits on the outer edge.</p>
+      <p>Every circle is one person recorded by the <a href="${esc(meta.source_url)}" target="_blank" rel="noopener">Central Tibetan Administration</a> as having set themselves on fire in protest. All of them are linked to this centre. In the 2D view they lie on a spiral of time: the earliest, Tapey in February 2009, sits nearest the centre, and the most recent, in March 2022, on the outer edge. In the 3D view they form a sphere around the centre, in the same order from the top (2009) to the bottom (2022). Switch views with the 2D / 3D buttons.</p>
       <div class="d-section"><h3>People by year</h3><div class="yearbars">${years.map(y => `<div><span>${y}</span><i style="width:${per(y) ? Math.max(2, per(y) / max * 100) : 0}%"></i><span>${per(y)}</span></div>`).join('')}</div></div>
       <div class="d-section"><h3>Reading the graph</h3><ul>
         <li>Amber ring: died (${meta.died}). Green ring: survived. Dashed ring: in custody, injured with no later report, or unknown.</li>
         <li>Outcomes describe what the source reported at the time, not anyone's situation today.</li>
         <li>Names and dates appear as you zoom in. Hover or focus a person to light their line to the centre.</li>
-        <li>Drag to move. Scroll or pinch to zoom. Shift + drag, Shift + scroll, a two-finger twist, or the ⟲ ⟳ buttons rotate. Keys: + − zoom, [ ] rotate, arrows move, 0 resets, space starts or stops the slow rotation.</li>
+        <li>2D: drag to move; Shift + drag, Shift + scroll, a two-finger twist or the ⟲ ⟳ buttons rotate.</li><li>3D: drag to turn the sphere in any direction; Shift + drag to move; ⟲ ⟳ spin it.</li><li>Both: scroll or pinch to zoom. Keys: 2 and 3 switch views, + − zoom, [ ] rotate, arrows move (2D) or turn (3D), 0 resets, space starts or stops the slow rotation.</li>
       </ul></div>
       <div class="d-section"><h3>Scope and review</h3>
       <p>The table was transcribed on ${fmtDate(meta.retrieved)}. ${meta.corrections_applied} fields were corrected after review against contemporary reports; each person's panel shows the original value, the value used, and the evidence.</p>
@@ -406,9 +513,11 @@
   function size() { W = innerWidth; H = innerHeight; }
   addEventListener('resize', size);
   size();
-  // opening move: start far out and drift in to the full view
-  Object.assign(cam, { x: 0, y: W <= 640 ? 60 : 10, k: fitK() * (reduceMotion ? 1 : .45), rot: reduceMotion ? 0 : -.6 });
-  if (!reduceMotion) flyTo({ x: 0, y: W <= 640 ? 60 : 10, k: fitK(), rot: 0 }, 2200);
+  // remembered view (per browser), then the opening move: start far out and drift in
+  let saved = '2d'; try { saved = localStorage.getItem('tsi-view') || '2d'; } catch {}
+  setMode(saved === '3d' ? '3d' : '2d', false);
+  Object.assign(cam, { x: 0, y: restY(), k: fitK() * (reduceMotion ? 1 : .45), rot: reduceMotion ? 0 : -.6, yaw: reduceMotion ? 0 : -1.2 });
+  if (!reduceMotion) flyTo({ x: 0, y: restY(), k: fitK(), rot: 0, yaw: 0 }, 2200);
   requestAnimationFrame(frame);
   const h = location.hash.slice(1);
   if (byId.has(h)) setTimeout(() => openPerson(h), reduceMotion ? 0 : 900);

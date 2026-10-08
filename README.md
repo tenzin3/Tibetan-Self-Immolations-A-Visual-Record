@@ -1,6 +1,6 @@
 # Tibetan Self-Immolations: A Visual Record
 
-An interactive radial graph of the 157 Tibetans recorded by the Central Tibetan Administration (CTA) as having self-immolated in protest between February 2009 and March 2022. Each person is a circle holding their photo (or initials until a photo is added), with their name and date underneath. Every circle has a line to one shared centre. You can drag, zoom and rotate the whole graph, and selecting a person opens their full record.
+An interactive radial graph, in 2D or 3D, of the 157 Tibetans recorded by the Central Tibetan Administration (CTA) as having self-immolated in protest between February 2009 and March 2022. Each person is a circle holding their photo (or initials until a photo is added), with their name and date underneath. Every circle has a line to one shared centre. You can drag, zoom and rotate the whole graph, and switch between a flat 2D spiral and a 3D sphere. Selecting a person opens their full record.
 
 ## Quick start
 
@@ -58,12 +58,32 @@ The earlier prototype in `sites/visual-record/` was removed. It loaded a `data/r
   - pale green ring: survived, released or recovering (7)
   - dashed grey ring: in custody, injured with no later report, or unknown (14)
 
+### 2D and 3D views
+The **2D / 3D** switch (bottom right; bottom centre on phones; keys `2` and `3`) changes the layout. When you switch, every circle travels from one layout to the other over about 1.3 seconds, and its line stays attached to the centre. The page remembers your last choice in this browser.
+
+| | 2D: spiral of time | 3D: sphere of time |
+| --- | --- | --- |
+| Shape | flat Archimedean spiral around the hub | Fibonacci sphere (evenly spaced points) around the hub |
+| Order | 2009 nearest the centre, 2022 on the outer edge | 2009 at the top pole, 2022 at the bottom |
+| Lines | gently curved, like spiral arms | straight spokes from the centre |
+| Time thread | dashed line along the spiral | dashed line joining people in date order |
+| Depth | none | people further away are smaller and dimmer; people behind the centre pass behind it (they are re-sorted continuously) |
+| Drag | moves the graph | turns the sphere in any direction |
+| Shift + drag | rotates | moves the graph |
+| ⟲ ⟳, twist, Shift + scroll | rotate the flat graph | spin the sphere around its vertical axis |
+| Slow rotation | turns around the centre | spins the sphere |
+| Opening a person | flies to them | turns the sphere so they face you, slightly off the centre, then zooms in |
+
+The 3D view uses a perspective projection drawn in the same SVG, with no 3D library. Every label, click, search highlight and record panel works identically in both views.
+
 ### Moving around
 | Action | Mouse / trackpad | Touch | Keyboard / buttons |
 | --- | --- | --- | --- |
-| Move (pan) | drag | one-finger drag | arrow keys |
+| Switch 2D / 3D | 2D / 3D buttons | 2D / 3D buttons | `2` / `3` |
+| Move (pan) | drag (2D); Shift + drag (3D) | one-finger drag (2D) | arrow keys (2D) |
+| Turn the sphere (3D) | drag | one-finger drag | arrow keys |
 | Zoom | scroll wheel, or trackpad pinch | pinch | `+` / `−`, or the + − buttons |
-| Rotate | Shift + drag, or Shift + scroll; Safari trackpad rotate | two-finger twist | `[` / `]`, or the ⟲ ⟳ buttons |
+| Rotate / spin | Shift + drag (2D), or Shift + scroll; Safari trackpad rotate | two-finger twist | `[` / `]`, or the ⟲ ⟳ buttons |
 | Slow automatic rotation | — | — | space, or the ❚❚ / ▶ button |
 | Reset view | — | — | `0`, or the ⌂ button |
 | Open a person | click | tap | Tab to a person, then Enter |
@@ -148,10 +168,11 @@ The source data contains no photographs, and `research/SOURCES.md` requires each
 3. Run `python3 scripts/build_records.py`. The circle in the graph, the record panel and the credit line update automatically. Photos are cropped to a circle.
 
 ## Design notes
-- **Concept**: a vigil. Butter-lamp amber on a deep umber night, with monastic maroon for the lines. The page uses one deliberate dark theme.
+- **Palette** ("Himalayan night"): deep indigo ground `#0c1220`, raised panels `#151d30`, slate-blue lines `#34466e`, snow-white text `#eef1f6`, saffron accent `#f2b134` (died, years, highlights), and prayer-flag green `#6cc29a` (survived). The page uses one deliberate dark theme.
+- **Changing the palette**: edit the colour tokens at the top of `site/styles.css` (`:root`). Three colours live outside that block: the gradient stops in the `<defs>` of `site/index.html` (halo, hub, circle face) and the ember colour in `site/app.js` (`rgba(242,177,52, …)`).
 - **Type**: Cormorant Garamond for the title, years and hub; Instrument Sans for names and reading; JetBrains Mono for dates and labels. All come from Google Fonts, with system fallbacks.
 - **Geometry** (top of the layout section in `app.js`): circle radius `NODE_R` 20, spacing along the spiral `S` 80, distance between turns `TURN` 92, inner radius `R0` 175, year gap `YEAR_GAP` 1.9×S. These values keep names from overlapping their neighbours.
-- **Camera**: `screen = centre + offset + zoom · rotation · world`. All pan, zoom and rotate math is in `zoomAt()` and `rotateAt()`.
+- **Camera**: 2D: `screen = centre + offset + zoom · rotation · world`. 3D: each point is turned by `yaw` (around the vertical axis) and `pitch` (tilt), given perspective (`PERSP` 1600), then offset and zoomed. A `mix` value from 0 to 1 blends the two layouts during the switch. Pan, zoom and rotate math is in `zoomAt()`, `rotateAt()` and `orbit()`; the 3D sphere radius is `R3` 520.
 - **Accessibility**: every person is focusable, with a spoken label (name, date, outcome). The hub and all controls work from the keyboard. The record panel keeps focus inside while it is open and returns focus to the person when it closes. The layout works at phone width.
 
 ## Known limits and next steps
