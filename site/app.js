@@ -121,8 +121,8 @@
 
   el('circle', { class: 'glow', r: 150 }, gHub);
   el('circle', { class: 'disc', r: 82 }, gHub);
-  el('text', { class: 'big', y: 10 }, gHub).textContent = meta.people;
-  el('text', { class: 'sub', y: 32 }, gHub).textContent = 'LIVES';
+  const hubBig = el('text', { class: 'big', y: 10 }, gHub); hubBig.textContent = meta.people;
+  const hubSub = el('text', { class: 'sub', y: 32 }, gHub); hubSub.textContent = 'LIVES';
   el('text', { class: 'yrs', y: -36 }, gHub).textContent = `${meta.first_year} – ${meta.last_year}`;
   el('text', { class: 'yrs', y: 52 }, gHub).textContent = 'about this record';
 
@@ -367,30 +367,110 @@
   });
   function hintQuiet() { $('#hint').classList.add('quiet'); }
 
-  /* ---------- Search & outcome filter ---------- */
-  const OUTCOMES = [['', 'Everyone'], ['died', 'Died'], ['survived', 'Survived'], ['other', 'Custody, injured, unknown']];
-  $('#chips').innerHTML = OUTCOMES.map(([k, l]) => `<button type="button" class="chip" data-k="${k}" aria-pressed="${k === ''}">${l} <b>${k ? people.filter(p => cls(p) === k).length : people.length}</b></button>`).join('');
-  let outcomeKey = '', matches = [];
+  /* ---------- Search & filters ----------
+     Facets combine with AND across groups and OR within a group. Each option shows how many
+     people it would match given everything else that is selected (faceted counts). */
+  const ageBucket = p => {
+    const n = typeof p.age === 'number' ? p.age : parseInt((String(p.age ?? '').match(/\d+/) || [])[0], 10);
+    if (isNaN(n)) return 'na';
+    return n < 20 ? 'u20' : n < 30 ? '20s' : n < 40 ? '30s' : n < 50 ? '40s' : '50+';
+  };
+  const yearList = []; for (let y = meta.first_year; y <= meta.last_year; y++) yearList.push(String(y));
+  const regionList = [...new Set(people.map(p => p.region))].sort((a, c) => people.filter(p => p.region === c).length - people.filter(p => p.region === a).length);
+  const FACETS = [
+    { key: 'outcome', label: 'Outcome', get: p => cls(p), options: [['died', 'Died'], ['survived', 'Survived'], ['other', 'Custody, injured or unknown']] },
+    { key: 'year', label: 'Year of protest', get: p => p.date.slice(0, 4), options: yearList.map(y => [y, y]), compact: true },
+    { key: 'region', label: 'Place (province)', get: p => p.region, options: regionList.map(r => [r, r]),
+      note: 'All 157 protests in this record took place inside the People’s Republic of China. Exile cases (India, Nepal, the US and others) are not yet in this data.' },
+    { key: 'gender', label: 'Gender', get: p => p.gender || 'Not stated', options: [['Male', 'Men'], ['Female', 'Women'], ['Not stated', 'Not stated']] },
+    { key: 'age', label: 'Age at the time', get: ageBucket, options: [['u20', 'Under 20'], ['20s', '20–29'], ['30s', '30–39'], ['40s', '40–49'], ['50+', '50 and over'], ['na', 'Not known']] },
+  ];
+  const selected = Object.fromEntries(FACETS.map(f => [f.key, new Set()]));
+  people.forEach(p => { p.facet = Object.fromEntries(FACETS.map(f => [f.key, f.get(p)])); });
+
+  $('#filters-body').innerHTML = FACETS.map(f => `
+    <fieldset class="fgroup${f.compact ? ' compact' : ''}"><legend>${f.label}</legend>
+      <div class="chips">${f.options.map(([v, l]) => `<button type="button" class="chip" data-f="${f.key}" data-v="${esc(v)}" aria-pressed="false">${esc(l)} <b></b></button>`).join('')}</div>
+      ${f.note ? `<p class="fnote">${esc(f.note)}</p>` : ''}
+    </fieldset>`).join('');
+
+  let matches = [];
+  const passes = (p, q, except) => (!q || p.search.includes(q)) && FACETS.every(f => f.key === except || !selected[f.key].size || selected[f.key].has(p.facet[f.key]));
   function applyFilters() {
     const q = fold($('#q').value.trim());
-    matches = [];
+    const nActive = FACETS.reduce((n, f) => n + selected[f.key].size, 0);
+    const filtering = !!(q || nActive);
+    matches = people.filter(p => passes(p, q));
+    const set = new Set(matches);
     people.forEach(p => {
-      const ok = (!q || p.search.includes(q)) && (!outcomeKey || cls(p) === outcomeKey);
-      const filtering = q || outcomeKey;
+      const ok = set.has(p);
       p.g.classList.toggle('dim', !ok); p.link.classList.toggle('dim', !ok);
-      p.g.classList.toggle('match', !!(ok && q)); p.link.classList.toggle('match', !!(ok && filtering));
-      if (ok) matches.push(p);
+      p.g.classList.toggle('match', ok && filtering); p.link.classList.toggle('match', ok && filtering);
     });
+    // faceted counts
+    FACETS.forEach(f => {
+      const pool = people.filter(p => passes(p, q, f.key));
+      $$(`.chip[data-f="${f.key}"]`).forEach(b => {
+        const n = pool.filter(p => p.facet[f.key] === b.dataset.v).length;
+        b.querySelector('b').textContent = n;
+        b.classList.toggle('zero', n === 0 && b.getAttribute('aria-pressed') !== 'true');
+      });
+    });
+    $('#fcount').textContent = nActive ? nActive : '';
+    if (typeof renderPills === 'function') renderPills();
+    $('#fclear').disabled = !filtering;
+    hubBig.textContent = filtering ? matches.length : meta.people;
+    hubSub.textContent = filtering ? `OF ${meta.people} SHOWN` : 'LIVES';
     const c = $('#count');
-    if (!q && !outcomeKey) { c.textContent = ''; return; }
+    if (!filtering) { c.textContent = ''; return; }
     c.innerHTML = matches.length
-      ? `${matches.length} of ${people.length} · <button type="button" id="go-first">Show ${esc(matches[0].name)}</button>`
-      : 'No one matches. Try another spelling.';
+      ? `${matches.length} of ${people.length} people · <button type="button" id="go-first">Show ${esc(matches[0].name)}</button>`
+      : 'No one matches. Remove a filter or try another spelling.';
     const gf = $('#go-first'); if (gf) gf.addEventListener('click', () => openPerson(matches[0].id));
   }
   $('#q').addEventListener('input', applyFilters);
   $('#q').addEventListener('keydown', e => { if (e.key === 'Enter' && matches.length && $('#q').value.trim()) openPerson(matches[0].id); });
-  $$('.chip').forEach(c => c.addEventListener('click', () => { outcomeKey = c.dataset.k; $$('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === c))); applyFilters(); }));
+  $('#filters-body').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const s = selected[b.dataset.f], on = !s.has(b.dataset.v);
+    on ? s.add(b.dataset.v) : s.delete(b.dataset.v);
+    b.setAttribute('aria-pressed', String(on));
+    applyFilters();
+  });
+  $('#fclear').addEventListener('click', () => {
+    FACETS.forEach(f => selected[f.key].clear()); $$('#filters-body .chip').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    $('#q').value = ''; applyFilters();
+  });
+  // open / close the panel; the choice is remembered in this browser
+  const setPanel = (open, remember = true) => {
+    $('#filters').hidden = !open; $('#ftoggle').setAttribute('aria-expanded', String(open));
+    renderPills();
+    if (remember) try { localStorage.setItem('tsi-filters-open', open ? '1' : '0'); } catch {}
+  };
+  $('#ftoggle').addEventListener('click', () => setPanel($('#filters').hidden));
+  $('#fclose').addEventListener('click', () => { setPanel(false); $('#ftoggle').focus(); });
+  document.addEventListener('keydown', e => {
+    if (drawerOpen || e.target.matches('input, textarea')) return;
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); setPanel($('#filters').hidden); }
+    else if (e.key === 'Escape' && !$('#filters').hidden) setPanel(false);
+  });
+  // while the panel is closed, active filters show as small removable pills under the search box
+  function renderPills() {
+    const box = $('#active-pills'), closed = $('#filters').hidden;
+    const items = [];
+    FACETS.forEach(f => selected[f.key].forEach(v => items.push({ f: f.key, v, label: (f.options.find(o => o[0] === v) || [v, v])[1] })));
+    box.hidden = !closed || !items.length;
+    box.innerHTML = items.map(i => `<button type="button" class="pill-x" data-f="${i.f}" data-v="${esc(i.v)}" aria-label="Remove filter ${esc(i.label)}">${esc(i.label)} <span aria-hidden="true">✕</span></button>`).join('');
+  }
+  $('#active-pills').addEventListener('click', e => {
+    const b = e.target.closest('.pill-x'); if (!b) return;
+    selected[b.dataset.f].delete(b.dataset.v);
+    const chip = $(`#filters-body .chip[data-f="${b.dataset.f}"][data-v="${CSS.escape(b.dataset.v)}"]`); if (chip) chip.setAttribute('aria-pressed', 'false');
+    applyFilters();
+  });
+  let savedPanel = null; try { savedPanel = localStorage.getItem('tsi-filters-open'); } catch {}
+  setPanel(savedPanel === '1', false);
+  applyFilters();
 
   /* ---------- Drawer: one person, or the "about" page ---------- */
   const drawer = $('#drawer'), scrim = $('#scrim');

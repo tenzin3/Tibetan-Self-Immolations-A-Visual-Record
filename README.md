@@ -103,9 +103,24 @@ Zoom works around the pointer or pinch point. Rotation turns around the centre, 
 
 When the visitor's system asks for **reduced motion**, the rotation, floating, opening move, fly-to and embers are all off. Everything else still works.
 
-### Find
-- **Search** (top right) matches names, aliases, places, monasteries, provinces and years; accents are ignored. Matching people stay bright, with bold rings and lines, and everyone else fades. Press Enter, or select "Show …", to fly to the first match.
-- **Outcome chips**: Everyone, Died, Survived, or Custody / injured / unknown.
+### Search and filters (top right)
+- **Search** matches names, aliases, places, monasteries, provinces and years; accents are ignored. Press Enter, or select "Show …", to fly to the first match.
+- **Opening and closing**: the panel starts **closed**, so the graph has the screen. Open it with the **Filters ▾** button (or the `F` key). Close it with the same button, **Hide ▴** inside the panel, `F`, or `Esc`. The badge on the button shows how many filters are on, and the page remembers whether you left the panel open.
+- **While it's closed**, active filters appear under the search box as small pills (for example "2012 ✕", "Women ✕"). Select a pill to remove that filter without reopening the panel.
+- **Filter groups**:
+
+  | Group | Options | Source field |
+  | --- | --- | --- |
+  | Outcome | Died · Survived · Custody, injured or unknown | `outcome` |
+  | Year of protest | 2009 – 2022, one button per year | `date` |
+  | Place (province) | Sichuan · Qinghai · Gansu · Tibet Autonomous Region · Beijing | `region` |
+  | Gender | Men · Women · Not stated | `gender` |
+  | Age at the time | Under 20 · 20–29 · 30–39 · 40–49 · 50 and over · Not known | `age`; "20s", "late 30s" and similar go in their decade |
+
+- **Combining**: options in the same group add together (2012 *or* 2013); different groups narrow each other (women *and* 2012). Search combines with all of them.
+- **Live counts**: every option shows how many people it would match given everything else selected. Options that would match no one are faded.
+- **Place, not country**: every protest in this record took place inside the People's Republic of China, so the place filter works by province. The panel says so. Exile cases (India, Nepal, the US and others) can get a country filter once they are added to the data.
+- **What you see**: matching people stay bright, with bold rings and lit lines, and everyone else fades. The centre changes from "157 lives" to "*n* of 157 shown". **Clear all** resets the search and every filter.
 
 ### Record panel (select anyone)
 The panel shows:
