@@ -1,0 +1,5 @@
+{
+  "_readme": "Manual decisions for pairing ICT entries with CTA records, used by scripts/build_records.py. Use the ids from data/merge-report.json. 'same_person' forces a pair; 'different_people' stops the script from pairing two records.",
+  "same_person": [],
+  "different_people": []
+}

@@ -57,6 +57,7 @@ button, input { font: inherit; color: inherit; }
 .node.died .ring { stroke: var(--flame); }
 .node.survived .ring { stroke: var(--survived); }
 .node.other .ring { stroke: var(--ash); stroke-dasharray: 4 3; }
+.node .exdot { fill: var(--parchment); stroke: var(--night); stroke-width: 2; }
 .node .ini { font: 500 15px var(--display); fill: var(--parchment); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .node .nm { font: 500 9.5px var(--body); fill: var(--parchment); text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: var(--night); stroke-width: 3px; stroke-linejoin: round; }
 .node .dt { font: 7.5px var(--mono); fill: var(--ash); text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: var(--night); stroke-width: 3px; }
@@ -108,6 +109,7 @@ h1 span { display: block; font-style: italic; font-size: .6em; color: var(--flam
 .fhead { display: flex; align-items: center; justify-content: space-between; font: 500 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--parchment); margin-bottom: -2px; }
 .fclose { background: none; border: 1px solid var(--line); border-radius: 12px; height: 24px; padding: 0 10px; cursor: pointer; font: 11px var(--mono); color: var(--ash); text-transform: none; letter-spacing: 0; }
 .fclose:hover { color: var(--parchment); border-color: var(--ash); }
+.active-pills[hidden] { display: none; }
 .active-pills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .pill-x { height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid var(--flame); background: color-mix(in srgb, var(--flame) 16%, var(--night)); color: var(--parchment); font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .pill-x span { font-size: 10px; color: var(--flame); }
@@ -152,6 +154,7 @@ h1 span { display: block; font-style: italic; font-size: .6em; color: var(--flam
 .k-died { border: 2px solid var(--flame); box-shadow: 0 0 8px var(--flame); }
 .k-survived { border: 2px solid var(--survived); }
 .k-other { border: 2px dashed var(--ash); }
+.k-exile { width: 9px; height: 9px; background: var(--parchment); margin-inline: 2.5px; }
 .k-spiral { border-radius: 0; height: 0; border-top: 1px dashed var(--ash); }
 
 .hud {
@@ -223,6 +226,13 @@ h1 span { display: block; font-style: italic; font-size: .6em; color: var(--flam
 .facts div.wide { grid-column: 1 / -1; }
 .facts dt { font: 10px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--smoke); margin-bottom: 3px; }
 .facts dd { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
+.facts dt { display: flex; align-items: center; gap: 6px; }
+.srctag { font: 9px/1 var(--mono); letter-spacing: .04em; text-transform: none; color: var(--ash); border: 1px solid var(--line); border-radius: 8px; padding: 2px 5px; text-decoration: none; }
+.srctag:hover { color: var(--flame); border-color: var(--flame); }
+.facts dd.unk, .srctable td.unk { color: var(--smoke); font-style: italic; }
+.srctable { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 13px; }
+.srctable th, .srctable td { text-align: left; vertical-align: top; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.srctable th { width: 34%; font: 10px/1.6 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--smoke); font-weight: 400; }
 .facts dd small { display: block; color: var(--smoke); font: 11px var(--mono); margin-top: 2px; }
 .d-section { margin-top: 22px; }
 .d-section h3 { font: 500 22px/1.2 var(--display); margin: 0 0 10px; }

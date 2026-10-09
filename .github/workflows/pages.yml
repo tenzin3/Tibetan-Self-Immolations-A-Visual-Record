@@ -1,27 +1,28 @@
-# Publishes the site/ folder to GitHub Pages on every push to main.
-# One-time setup on GitHub: Settings → Pages → Build and deployment → Source: "GitHub Actions".
-name: Deploy site to GitHub Pages
+# Keeps the record up to date and publishes it on GitHub Pages.
+#
+# • Every Monday, on every push to main, and on demand from the Actions tab:
+#   download ICT's fact sheet, rebuild the merged data, and commit any changes back to main.
+# • Then publish site/ to GitHub Pages.
+#
+# One-time setup on GitHub: Settings → Pages → Source: "GitHub Actions".
+name: Update data and deploy site
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:   # also allows a manual run from the Actions tab
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+  workflow_dispatch:       # "Run workflow" button on the Actions tab
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  update-data:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -29,8 +30,60 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Rebuild the merged dataset so the published data always matches data/ and research/
-      - name: Build records
+      - name: Download the ICT fact sheet
+        run: |
+          code=0
+          python3 scripts/fetch_ict.py || code=$?
+          if [ "$code" = "3" ]; then
+            echo "Direct download refused; retrying with headless Chrome"
+            google-chrome --headless=new --no-sandbox --disable-gpu --virtual-time-budget=15000 \
+              --user-agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36" \
+              --dump-dom "https://savetibet.org/tibetan-self-immolations/" > /tmp/ict.html || true
+            if [ -s /tmp/ict.html ]; then
+              python3 scripts/fetch_ict.py --html /tmp/ict.html
+            else
+              echo "::warning::ICT fact sheet unavailable this week; keeping the previous snapshot."
+            fi
+          elif [ "$code" != "0" ]; then
+            exit "$code"
+          fi
+
+      - name: Merge sources and rebuild the record
+        run: python3 scripts/build_records.py | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit changes
+        run: |
+          git add data/ site/data/ README.md
+          if git diff --cached --quiet; then
+            echo "No changes in the sources this week." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Weekly data update from ICT fact sheet ($(date -u +%Y-%m-%d))"
+            git push
+          fi
+
+  deploy:
+    needs: update-data
+    if: always() && needs.update-data.result != 'cancelled'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main   # includes this week's data commit, if any
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build the record
         run: python3 scripts/build_records.py
 
       - uses: actions/configure-pages@v5

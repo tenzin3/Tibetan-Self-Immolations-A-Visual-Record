@@ -16,16 +16,18 @@
   const byId = new Map(people.map(p => [p.id, p]));
   const order = people.map(p => p.id); // chronological
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const fmtDate = iso => { if (!iso) return ''; const [y, m, d] = iso.split('-').map(Number); return d ? `${d} ${MONTHS[m - 1]} ${y}` : m ? `${MONTHS[m - 1]} ${y}` : String(y); };
-  const shortDate = iso => { const [y, m, d] = iso.split('-').map(Number); return `${d} ${MONTHS[m - 1].slice(0, 3)} ${y}`; };
-  const cls = p => p.outcome === 'died' ? 'died' : p.outcome === 'survived' ? 'survived' : 'other';
+  const fmtDate = iso => { if (!iso) return ''; if (!/^\d{4}/.test(iso)) return iso; const [y, m, d] = iso.split('-').map(Number); return d ? `${d} ${MONTHS[m - 1]} ${y}` : m ? `${MONTHS[m - 1]} ${y}` : String(y); };
+  // the date as it should be shown: approximate dates are shown as published
+  const showDate = p => p.date_precision && p.date_precision !== 'day' ? p.date_as_published : fmtDate(p.date);
+  const shortDate = (iso, prec) => { const [y, m, d] = iso.split('-').map(Number); return prec === 'year' ? String(y) : prec === 'month' ? `${MONTHS[m - 1].slice(0, 3)} ${y}` : `${d} ${MONTHS[m - 1].slice(0, 3)} ${y}`; };
+  const cls = p => p.outcome === 'died' || p.outcome === 'believed_died' ? 'died' : p.outcome === 'survived' ? 'survived' : 'other';
   const fold = v => String(v || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const hash = (id, salt) => { let h = 2166136261 ^ salt; for (const c of id) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10000) / 10000; };
   const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
   people.forEach(p => { p.search = fold([p.name, ...(p.aliases || []), p.location, p.affiliation, p.region, p.date.slice(0, 4)].join(' ')); });
 
   /* ---------- Header figures ---------- */
-  $('#stats').innerHTML = `<b>${meta.people}</b> people · <b>${meta.died}</b> reported dead · <b>${meta.events}</b> incidents · ${meta.first_year}–${meta.last_year}`;
+  $('#stats').innerHTML = `<b>${meta.people}</b> people · <b>${meta.tibet}</b> in Tibet and China · <b>${meta.exile}</b> in exile · <b>${meta.died + (meta.believed_died || 0)}</b> reported or believed dead · ${meta.first_year}–${meta.last_year}`;
 
   /* ---------- Layout: an Archimedean spiral of time around the hub ----------
      r = b·θ. Nodes sit at equal arc length S along it, oldest nearest the centre.
@@ -95,8 +97,9 @@
 
   people.forEach(p => {
     p.link = el('path', { class: `link ${cls(p)}` }, gLinks);
-    const g = el('g', { class: `node ${cls(p)}`, id: p.id, tabindex: '0', role: 'button', 'aria-label': `${p.name}, ${fmtDate(p.date)}. ${p.outcome_label}.` }, gNodes);
+    const g = el('g', { class: `node ${cls(p)}`, id: p.id, tabindex: '0', role: 'button', 'aria-label': `${p.name}, ${showDate(p)}${p.section === 'exile' ? `, in exile (${p.country})` : ''}. ${p.outcome_label}.` }, gNodes);
     g.dataset.id = p.id;
+    if (p.section === 'exile') g.classList.add('exile');
     const upright = el('g', {}, g);
     const pop = el('g', { class: 'pop' }, upright);
     el('circle', { class: 'halo', r: NODE_R * 1.9 }, pop);
@@ -106,9 +109,10 @@
     } else {
       el('text', { class: 'ini', y: 1 }, pop).textContent = p.initials;
     }
+    if (p.section === 'exile') el('circle', { class: 'exdot', cx: NODE_R * .72, cy: -NODE_R * .72, r: 4.5 }, pop);
     const lines = splitName(p.name);
     lines.forEach((ln, i) => { el('text', { class: 'nm', y: NODE_R + 13 + i * 11 }, upright).textContent = ln; });
-    el('text', { class: 'dt', y: NODE_R + 13 + lines.length * 11 }, upright).textContent = shortDate(p.date);
+    el('text', { class: 'dt', y: NODE_R + 13 + lines.length * 11 }, upright).textContent = shortDate(p.date, p.date_precision);
     p.g = g; p.upright = upright;
   });
 
@@ -257,7 +261,7 @@
     '2d': 'Drag to move · scroll or pinch to zoom · Shift + drag, Shift + scroll or two-finger twist to rotate · select a person to read their record',
     '3d': 'Drag to turn the sphere · scroll or pinch to zoom · Shift + drag to move · select a person to read their record',
   };
-  const LEGEND = { '2d': 'Spiral of time: 2009 inside, 2022 outside', '3d': 'Sphere of time: 2009 at the top, 2022 at the bottom' };
+  const LEGEND = { '2d': `Spiral of time: ${meta.first_year} inside, ${meta.last_year} outside`, '3d': `Sphere of time: ${meta.first_year} at the top, ${meta.last_year} at the bottom` };
   function setMode(next, animate = true) {
     if (next !== '2d' && next !== '3d') return;
     mode = next;
@@ -370,20 +374,17 @@
   /* ---------- Search & filters ----------
      Facets combine with AND across groups and OR within a group. Each option shows how many
      people it would match given everything else that is selected (faceted counts). */
-  const ageBucket = p => {
-    const n = typeof p.age === 'number' ? p.age : parseInt((String(p.age ?? '').match(/\d+/) || [])[0], 10);
-    if (isNaN(n)) return 'na';
-    return n < 20 ? 'u20' : n < 30 ? '20s' : n < 40 ? '30s' : n < 50 ? '40s' : '50+';
-  };
-  const yearList = []; for (let y = meta.first_year; y <= meta.last_year; y++) yearList.push(String(y));
-  const regionList = [...new Set(people.map(p => p.region))].sort((a, c) => people.filter(p => p.region === c).length - people.filter(p => p.region === a).length);
+  const yearList = [...new Set(people.map(p => p.date.slice(0, 4)))].sort();
+  const byCount = key => [...new Set(people.map(p => p[key]))].sort((a, c) => people.filter(p => p[key] === c).length - people.filter(p => p[key] === a).length);
   const FACETS = [
-    { key: 'outcome', label: 'Outcome', get: p => cls(p), options: [['died', 'Died'], ['survived', 'Survived'], ['other', 'Custody, injured or unknown']] },
+    { key: 'outcome', label: 'Outcome', get: p => cls(p), options: [['died', 'Died or believed dead'], ['survived', 'Survived'], ['other', 'Custody, injured or unknown']] },
+    { key: 'country', label: 'Country of protest', get: p => p.country, options: byCount('country').map(c => [c, c]),
+      note: '“Tibet and China” covers protests inside the People’s Republic of China. The others took place in exile.' },
     { key: 'year', label: 'Year of protest', get: p => p.date.slice(0, 4), options: yearList.map(y => [y, y]), compact: true },
-    { key: 'region', label: 'Place (province)', get: p => p.region, options: regionList.map(r => [r, r]),
-      note: 'All 157 protests in this record took place inside the People’s Republic of China. Exile cases (for example in Delhi and New York) are not yet in this data.' },
-    { key: 'gender', label: 'Gender', get: p => p.gender || 'Not stated', options: [['Male', 'Men'], ['Female', 'Women'], ['Not stated', 'Not stated']] },
-    { key: 'age', label: 'Age at the time', get: ageBucket, options: [['u20', 'Under 20'], ['20s', '20–29'], ['30s', '30–39'], ['40s', '40–49'], ['50+', '50 and over'], ['na', 'Not known']] },
+    { key: 'region', label: 'Place (province, or country in exile)', get: p => p.region, options: byCount('region').map(r => [r, r]) },
+    { key: 'source', label: 'Listed by', get: p => p.listed_by.join(' + '), options: [['CTA + ICT', 'Both CTA and ICT'], ['ICT', 'ICT only'], ['CTA', 'CTA only']] },
+    { key: 'gender', label: 'Gender', get: p => p.gender, options: [['Male', 'Men'], ['Female', 'Women'], ['Unknown', 'Unknown']] },
+    { key: 'age', label: 'Age at the time', get: p => p.age_group, options: [['u20', 'Under 20'], ['20s', '20–29'], ['30s', '30–39'], ['40s', '40–49'], ['50+', '50 and over'], ['na', 'Unknown']] },
   ];
   const selected = Object.fromEntries(FACETS.map(f => [f.key, new Set()]));
   people.forEach(p => { p.facet = Object.fromEntries(FACETS.map(f => [f.key, f.get(p)])); });
@@ -476,64 +477,78 @@
   const drawer = $('#drawer'), scrim = $('#scrim');
   let openId = null, returnFocus = null;
   const faceHTML = p => `<div class="face ${cls(p)}">${p.portrait && p.portrait.file ? `<img src="${esc(p.portrait.file)}" alt="Portrait of ${esc(p.name)}">` : `<span aria-hidden="true">${esc(p.initials)}</span>`}</div>`;
-  const fact = (label, value, extra, wide) => value || value === 0 ? `<div${wide ? ' class="wide"' : ''}><dt>${label}</dt><dd>${esc(value)}${extra ? `<small>${esc(extra)}</small>` : ''}</dd></div>` : '';
+  const srcTag = src => src && src.url ? `<a class="srctag" href="${esc(safeURL(src.url))}" target="_blank" rel="noopener" title="Where this comes from">${esc(src.label)}</a>` : '';
+  const fact = (label, value, extra, wide, src) => value || value === 0
+    ? `<div${wide ? ' class="wide"' : ''}><dt>${label}${srcTag(src)}</dt><dd class="${value === 'Unknown' ? 'unk' : ''}">${esc(value)}${extra ? `<small>${esc(extra)}</small>` : ''}</dd></div>` : '';
 
   function personHTML(p) {
-    const parents = [p.father && `Father: ${p.father}`, p.mother && `Mother: ${p.mother}`].filter(Boolean).join(' · ');
+    const fs = p.field_sources || {};
+    const parents = [p.father !== 'Unknown' && `Father: ${p.father}`, p.mother !== 'Unknown' && `Mother: ${p.mother}`].filter(Boolean).join(' · ');
     const dateCorr = p.corrections.find(c => c.field === 'incident date');
     let death = '';
-    if (p.outcome === 'died') {
-      death = p.death_date ? fmtDate(p.death_date) : 'Date not given';
+    if (cls(p) === 'died') {
+      death = p.death_date ? fmtDate(p.death_date) : 'Unknown';
       if (p.days_until_death === 0) death += ', the same day';
       else if (p.days_until_death > 0) death += `, ${p.days_until_death} day${p.days_until_death === 1 ? '' : 's'} later`;
     }
     const others = (p.shared_with || []).map(id => byId.get(id)).filter(Boolean);
+    const i = p.ict;
+    const ictRows = i ? [['Name', i.name + (i.aliases.length ? ` (${i.aliases.join(', ')})` : '')], ['Date', i.date_as_published], ['Protest location', i.location_as_published], ['Age', i.age_as_published],
+      ['Whereabouts / wellbeing', i.status_as_published], ['Monastery', i.monastery_as_published], ['Occupation', i.occupation_as_published]].filter(r => r[1] && r[1] !== 'Unknown' || ['Date', 'Age', 'Whereabouts / wellbeing'].includes(r[0])) : [];
     return `
       <div class="d-head">${faceHTML(p)}
-        <div><p class="eyebrow">Record ${p.position} of ${people.length}</p>
+        <div><p class="eyebrow">${p.section === 'exile' ? `In exile · ${esc(p.country)}` : 'Tibet and China'} · listed by ${esc(p.listed_by.join(' and '))}</p>
           <h2 id="d-name">${esc(p.name)}</h2>
           ${p.aliases.length ? `<p class="aka">Also recorded as ${esc(p.aliases.join(', '))}</p>` : ''}
           <span class="pill ${cls(p)}">${esc(p.outcome_label)}</span></div></div>
       <dl class="facts">
-        ${fact('Date of protest', fmtDate(p.date), dateCorr ? `Corrected; CTA lists ${dateCorr.original}` : '')}
-        ${fact('Age', p.age, p.age_is_approximate ? 'Approximate, as published' : '')}
-        ${fact('Gender', p.gender || 'Not stated')}
-        ${fact('Province', p.region)}
-        ${p.outcome === 'died' ? fact('Died', death) : fact('Status as reported', p.status_as_published)}
-        ${fact('Place of protest', p.location, '', true)}
-        ${fact('Monastery, village or occupation', p.affiliation, '', true)}
-        ${parents ? fact('Parents', parents, '', true) : ''}
+        ${fact('Date of protest', showDate(p), dateCorr ? `Corrected; CTA lists ${dateCorr.original}` : p.date_precision && p.date_precision !== 'day' ? 'Approximate, as published' : '', false, fs.date)}
+        ${fact('Age', p.age, p.age_is_approximate ? 'Approximate, as published' : '', false, fs.age)}
+        ${fact('Gender', p.gender, '', false, fs.gender)}
+        ${fact(p.section === 'exile' ? 'Country' : 'Province', p.section === 'exile' ? p.country : p.region, '', false, fs.location)}
+        ${cls(p) === 'died' ? fact(p.outcome === 'believed_died' ? 'Believed to have died' : 'Died', death, '', false, fs.death_date || fs.outcome) : fact('Status as reported', p.status_as_published === 'Unknown' || /^unknown$/i.test(p.status_as_published) ? p.outcome_label : p.status_as_published, '', false, fs.outcome)}
+        ${fact('Place of protest', p.location, '', true, fs.location)}
+        ${fact('Monastery, village or occupation', p.affiliation, '', true, fs.affiliation)}
+        ${parents ? fact('Parents', parents, '', true, fs.parents) : ''}
       </dl>
       ${others.length ? `<div class="d-section"><h3>Same day, same place</h3><div class="together">${others.map(o => `<button type="button" data-go="${o.id}">${esc(o.name)}</button>`).join('')}</div></div>` : ''}
       ${p.corrections.length || p.notes.length || p.checks.length ? `<div class="d-section"><h3>Notes on this record</h3>
         ${p.corrections.map(c => `<p class="note"><span class="cert">${esc(c.certainty)} certainty correction</span><br><b>${esc(c.field)}</b>: CTA gives “${esc(c.original)}”; shown here as “${esc(c.field.includes('date') ? fmtDate(c.used) : c.used)}”. ${esc(c.evidence)}</p>`).join('')}
         ${p.checks.map(c => `<p class="note">${esc(c)}</p>`).join('')}
         ${p.notes.map(n => `<p class="note">${esc(n)}</p>`).join('')}</div>` : ''}
+      ${i ? `<div class="d-section"><h3>As published by ICT</h3><table class="srctable"><tbody>${ictRows.map(r => `<tr><th scope="row">${esc(r[0])}</th><td class="${r[1] === 'Unknown' ? 'unk' : ''}">${esc(r[1])}</td></tr>`).join('')}</tbody></table>
+        <a class="src" href="${esc(safeURL(i.source_url))}" target="_blank" rel="noopener">This person's entry on the ICT fact sheet<small>International Campaign for Tibet ↗</small></a></div>` : ''}
+      ${p.listed_by.includes('CTA') ? `<div class="d-section"><h3>As published by the CTA</h3><table class="srctable"><tbody>
+        <tr><th scope="row">Date</th><td>${esc(p.date_as_published)}</td></tr><tr><th scope="row">Status</th><td>${esc(p.status_as_published)}</td></tr></tbody></table></div>` : ''}
       <div class="d-section"><h3>Sources</h3>
         ${p.sources.map(s => `<a class="src" href="${esc(safeURL(s.url))}" target="_blank" rel="noopener">${esc(s.title)}<small>${esc(s.publisher)} ↗</small></a>`).join('')}
         ${p.portrait ? `<p class="fine">Portrait: ${esc(p.portrait.credit || 'credit not given')}${p.portrait.source_url ? ` · <a href="${esc(safeURL(p.portrait.source_url))}" target="_blank" rel="noopener">original</a>` : ''}</p>` : ''}
       </div>
-      <p class="fine">As published by CTA: <span class="raw">${esc(p.date_as_published)} · ${esc(p.status_as_published)}</span>. The status describes what was reported at the time.</p>`;
+      <p class="fine">Each fact carries a tag (CTA, ICT, or Corrected) linking to where it comes from. “Unknown” means neither source gives it. Statuses describe what was reported at the time.</p>`;
   }
 
   function aboutHTML() {
-    const years = []; for (let y = meta.first_year; y <= meta.last_year; y++) years.push(y);
+    const years = [...new Set(people.map(p => +p.date.slice(0, 4)))].sort((x, y) => x - y);
     const per = y => people.filter(p => +p.date.slice(0, 4) === y).length, max = Math.max(...years.map(per));
+    const S = meta.sources;
     return `<div class="about">
       <p class="eyebrow">About this record</p>
       <h2 id="d-name">${meta.people} people, ${meta.first_year}–${meta.last_year}</h2>
-      <p>Every circle is one person recorded by the <a href="${esc(meta.source_url)}" target="_blank" rel="noopener">Central Tibetan Administration</a> as having set themselves on fire in protest. All of them are linked to this centre. In the 2D view they lie on a spiral of time: the earliest, Tapey in February 2009, sits nearest the centre, and the most recent, in March 2022, on the outer edge. In the 3D view they form a sphere around the centre, in the same order from the top (2009) to the bottom (2022). Switch views with the 2D / 3D buttons.</p>
-      <div class="d-section"><h3>People by year</h3><div class="yearbars">${years.map(y => `<div><span>${y}</span><i style="width:${per(y) ? Math.max(2, per(y) / max * 100) : 0}%"></i><span>${per(y)}</span></div>`).join('')}</div></div>
+      <p>Every circle is one Tibetan who set themselves on fire in protest: <b>${meta.tibet}</b> inside Tibet and China and <b>${meta.exile}</b> in exile. All of them are linked to this centre. In the 2D view they lie on a spiral of time, earliest nearest the centre. In the 3D view they form a sphere, earliest at the top.</p>
+      <div class="d-section"><h3>Two sources, merged</h3>
+      <p><a href="${esc(S.cta.url)}" target="_blank" rel="noopener">Central Tibetan Administration</a> fact sheet: ${S.cta.records} people inside Tibet and China. Transcribed ${fmtDate(S.cta.retrieved)}; ${meta.corrections_applied} fields corrected after review.</p>
+      <p><a href="${esc(S.ict.url)}" target="_blank" rel="noopener">International Campaign for Tibet</a> fact sheet: ${S.ict.parsed_tibet} inside Tibet and China plus ${S.ict.parsed_exile} in exile. Checked weekly; last checked ${fmtDate(S.ict.retrieved)}, ICT's page last updated ${fmtDate(S.ict.page_last_updated)}.</p>
+      <p>${meta.matched} people appear in both lists, ${meta.ict_only} only in ICT's. Where the sources disagree, both versions are shown. Missing information is shown as “Unknown”.</p></div>
+      <div class="d-section"><h3>People by year</h3><div class="yearbars">${years.map(y => `<div><span>${y}</span><i style="width:${Math.max(2, per(y) / max * 100)}%"></i><span>${per(y)}</span></div>`).join('')}</div></div>
       <div class="d-section"><h3>Reading the graph</h3><ul>
-        <li>Amber ring: died (${meta.died}). Green ring: survived. Dashed ring: in custody, injured with no later report, or unknown.</li>
-        <li>Outcomes describe what the source reported at the time, not anyone's situation today.</li>
+        <li>Gold ring: died or believed to have died (${meta.died + (meta.believed_died || 0)}). Green ring: survived (${meta.survived}). Dashed ring: in custody, injured with no later report, or unknown (${meta.other}).</li>
+        <li>A small outer dot marks a protest in exile.</li>
+        <li>Outcomes describe what the sources reported at the time, not anyone's situation today.</li>
         <li>Names and dates appear as you zoom in. Hover or focus a person to light their line to the centre.</li>
-        <li>2D: drag to move; Shift + drag, Shift + scroll, a two-finger twist or the ⟲ ⟳ buttons rotate.</li><li>3D: drag to turn the sphere in any direction; Shift + drag to move; ⟲ ⟳ spin it.</li><li>Both: scroll or pinch to zoom. Keys: 2 and 3 switch views, + − zoom, [ ] rotate, arrows move (2D) or turn (3D), 0 resets, space starts or stops the slow rotation.</li>
+        <li>2D: drag to move; Shift + drag, Shift + scroll, a two-finger twist or the ⟲ ⟳ buttons rotate.</li><li>3D: drag to turn the sphere in any direction; Shift + drag to move; ⟲ ⟳ spin it.</li><li>Both: scroll or pinch to zoom. Keys: 2 and 3 switch views, + − zoom, [ ] rotate, arrows move (2D) or turn (3D), 0 resets, F opens the filters, space starts or stops the slow rotation.</li>
       </ul></div>
-      <div class="d-section"><h3>Scope and review</h3>
-      <p>The table was transcribed on ${fmtDate(meta.retrieved)}. ${meta.corrections_applied} fields were corrected after review against contemporary reports; each person's panel shows the original value, the value used, and the evidence.</p>
-      <p>The International Campaign for Tibet counts 159 people inside Tibet and China since 2009, plus 11 in exile. Exile cases and the 30 March 2022 report of Tsering Samdup are not yet included.</p>
-      <p>${meta.with_portrait ? `${meta.with_portrait} people have a verified portrait; everyone else is shown by their initials.` : 'No portraits have been added yet, so each person is shown by their initials. A portrait appears once a verified photograph is registered for that record.'}</p>
+      <div class="d-section"><h3>Not included yet</h3>
+      <p>The 30 March 2022 report of Tsering Samdup (Radio Free Asia) appears in neither fact sheet. ${meta.with_portrait ? `${meta.with_portrait} people have a verified portrait; everyone else is shown by their initials.` : 'No portraits have been added yet, so each person is shown by their initials.'}</p>
       <p><a href="data/records.json" target="_blank" rel="noopener">Merged data (JSON)</a></p></div></div>`;
   }
 
