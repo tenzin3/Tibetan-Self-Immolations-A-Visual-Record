@@ -13,7 +13,7 @@ The record **updates itself every week** from ICT's fact sheet (see [How the rec
 ## At a glance
 
 <!-- figures:start -->
-*Updated automatically from the sources. CTA table transcribed 2026-10-08; ICT fact sheet last checked 2026-10-08 (ICT's page last updated 2026-07-03).*
+*Updated automatically from the sources. CTA table transcribed 2026-10-08; ICT fact sheet last checked 2026-10-09 (ICT's page last updated 2026-07-03).*
 
 | | |
 | --- | --- |
