@@ -2,6 +2,10 @@
 
 **View the record: https://tenzin3.github.io/Tibetan-Self-Immolations-A-Visual-Record/**
 
+[![The record in its 3D view: 170 people as circles around a central disc reading “170 lives”, each linked to it by a line, with the filter panel open on the right](images/record-3d-with-filters.png)](https://tenzin3.github.io/Tibetan-Self-Immolations-A-Visual-Record/)
+
+*The 3D view, with the filter panel open. Each circle is one person, labelled with their name and date of protest, and every line leads to the centre. Gold rings mark people who died or are believed to have died, and white dots mark protests in exile. The panel on the right filters by year, place, source, gender and age; each option shows how many people it matches.*
+
 This record brings together two lists of Tibetans who set themselves on fire in protest: the **Central Tibetan Administration (CTA)** fact sheet and the **International Campaign for Tibet (ICT)** fact sheet. It covers people inside Tibet and China since 2009 and people in exile since 1998. Each person is a circle, with their name and the date of their protest underneath, and all of them are linked to a single centre. Select anyone to read what is documented about them: age, home or monastery, where they protested, what happened to them afterwards, and where each fact comes from.
 
 The record **updates itself every week** from ICT's fact sheet (see [How the record stays up to date](#how-the-record-stays-up-to-date)).
