@@ -506,7 +506,7 @@
         ${fact('Age', p.age, p.age_is_approximate ? 'Approximate, as published' : '', false, fs.age)}
         ${fact('Gender', p.gender, '', false, fs.gender)}
         ${fact(p.section === 'exile' ? 'Country' : 'Province', p.section === 'exile' ? p.country : p.region, '', false, fs.location)}
-        ${cls(p) === 'died' ? fact(p.outcome === 'believed_died' ? 'Believed to have died' : 'Died', death, '', false, fs.death_date || fs.outcome) : fact('Status as reported', p.status_as_published === 'Unknown' || /^unknown$/i.test(p.status_as_published) ? p.outcome_label : p.status_as_published, '', false, fs.outcome)}
+        ${cls(p) === 'died' ? fact(p.outcome === 'believed_died' ? 'Date of death (believed)' : 'Date of death', death, '', false, fs.death_date || fs.outcome) : fact('Status as reported', p.status_as_published === 'Unknown' || /^unknown$/i.test(p.status_as_published) ? p.outcome_label : p.status_as_published, '', false, fs.outcome)}
         ${fact('Place of protest', p.location, '', true, fs.location)}
         ${fact('Monastery, village or occupation', p.affiliation, '', true, fs.affiliation)}
         ${parents ? fact('Parents', parents, '', true, fs.parents) : ''}
@@ -617,6 +617,8 @@
   const h = location.hash.slice(1);
   if (byId.has(h)) setTimeout(() => openPerson(h), reduceMotion ? 0 : 900);
   else if (h === 'about') openAbout();
+  // a shared link opened while the page is already showing
+  addEventListener('hashchange', () => { const k = location.hash.slice(1); if (byId.has(k) && k !== openId) openPerson(k); else if (k === 'about') openAbout(); });
 
   /* ---------- Ambient embers ---------- */
   (function embers() {
